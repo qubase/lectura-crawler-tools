@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -38,6 +40,8 @@ public class LecturaCrawlerStatistics {
 	private static HashMap<Integer, Crawler> crawlers = new HashMap<Integer, Crawler>();
 	
 	public static void main(String[] args) {
+		String emailBody = null;
+		String[] recipients = props.getProperty("email-recipients").split("//s*,//s*");
 		try {
 			initProps();
 			if (!initMongo()) {
@@ -46,14 +50,14 @@ public class LecturaCrawlerStatistics {
 			}
 			loadCrawlers();
 			
-			String emailBody = prepareEmail();
-			System.out.println(emailBody);
-			
-			String[] recipients = props.getProperty("email-recipients").split("//s*,//s*");
+			emailBody = prepareEmail();
 			Email.send(recipients, "Lectura Crawler Statistics", emailBody, props.getProperty("email-user"), props.getProperty("email-pass"), true);
 			
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			StringWriter stackTrace = new StringWriter();
+			e.printStackTrace(new PrintWriter(stackTrace));
+			emailBody = stackTrace.toString();
+			Email.send(recipients, "Lectura Crawler Statistics - Fail", emailBody, props.getProperty("email-user"), props.getProperty("email-pass"), false);
 		} finally {
 			System.exit(0);
 		}
