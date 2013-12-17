@@ -52,7 +52,7 @@ public class LecturaUploader {
 		
 		message = "";
 		String subject = null;
-		String[] recipients = props.getProperty("email-recipients").split("//s*,//s*");
+		String[] recipients = props.getProperty("email-recipients").split("\\s*,\\s*");
 		try {
 			if (loadPortals()) {
 				int size = portals.size();

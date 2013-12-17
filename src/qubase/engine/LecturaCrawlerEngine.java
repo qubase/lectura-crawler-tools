@@ -114,7 +114,7 @@ public class LecturaCrawlerEngine {
 	 * @param crawler
 	 */
 	public static void reportStopping(Crawler crawler) {
-		String[] recipients = props.getProperty("email-recipients").split("//s*,//s*");
+		String[] recipients = props.getProperty("email-recipients").split("\\s*,\\s*");
 		
 		String text = "Stopping crawler, too many errors occured. After revision you will need to change the status of this crawler back to 1 manually in the file: " + props.getProperty("crawler-config") + "\n\n";
 		text += "Crawler: [" + crawler.getId() + "] " + crawler.getName() + "\n\n";

@@ -48,7 +48,7 @@ public class LecturaCrawlerStatistics {
 				throw new Exception(message);
 			}
 			loadCrawlers();
-			String[] recipients = props.getProperty("email-recipients").split("//s*,//s*");
+			String[] recipients = props.getProperty("email-recipients").split("\\s*,\\s*");
 			emailBody = prepareEmail();
 			Email.send(recipients, "Lectura Crawler Statistics", emailBody, props.getProperty("email-user"), props.getProperty("email-pass"), true);
 			
@@ -58,7 +58,7 @@ public class LecturaCrawlerStatistics {
 			emailBody = stackTrace.toString();
 			String[] recipients = {"info@lectura.de"};
 			try {
-				recipients = props.getProperty("email-recipients").split("//s*,//s*");
+				recipients = props.getProperty("email-recipients").split("\\s*,\\s*");
 			} catch (Exception ignore) {
 				//
 			}
