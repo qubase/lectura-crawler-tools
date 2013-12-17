@@ -41,7 +41,6 @@ public class LecturaCrawlerStatistics {
 	
 	public static void main(String[] args) {
 		String emailBody = null;
-		String[] recipients = props.getProperty("email-recipients").split("//s*,//s*");
 		try {
 			initProps();
 			if (!initMongo()) {
@@ -49,7 +48,7 @@ public class LecturaCrawlerStatistics {
 				throw new Exception(message);
 			}
 			loadCrawlers();
-			
+			String[] recipients = props.getProperty("email-recipients").split("//s*,//s*");
 			emailBody = prepareEmail();
 			Email.send(recipients, "Lectura Crawler Statistics", emailBody, props.getProperty("email-user"), props.getProperty("email-pass"), true);
 			
@@ -57,6 +56,12 @@ public class LecturaCrawlerStatistics {
 			StringWriter stackTrace = new StringWriter();
 			e.printStackTrace(new PrintWriter(stackTrace));
 			emailBody = stackTrace.toString();
+			String[] recipients = {"info@lectura.de"};
+			try {
+				recipients = props.getProperty("email-recipients").split("//s*,//s*");
+			} catch (Exception ignore) {
+				//
+			}
 			Email.send(recipients, "Lectura Crawler Statistics - Fail", emailBody, props.getProperty("email-user"), props.getProperty("email-pass"), false);
 		} finally {
 			System.exit(0);
