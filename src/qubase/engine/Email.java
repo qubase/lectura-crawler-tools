@@ -11,20 +11,9 @@ import javax.mail.internet.*;
  */
 public class Email {
 	
-	
-	/**
-	 * sends the email message
-	 * @param recipients an array of strings with receivers email addresses
-	 * @param from email of the sender
-	 * @param subject subject of the message
-	 * @param text
-	 * @param local_level what priority this message has
-	 */
-	public static void send(String[] recipients, String subject, String text) {
+	public static void send(String[] recipients, String subject, String text, String username, String password, boolean isHtml) {
 		
 		String host = "smtp.gmail.com";
-		String username = LecturaCrawlerEngine.getProperties().getProperty("email-user");
-		String password = LecturaCrawlerEngine.getProperties().getProperty("email-pass");
  
 		Properties props = System.getProperties();
 		props.put("mail.smtp.starttls.enable", "true");
@@ -46,7 +35,11 @@ public class Email {
 		    message.setRecipients(Message.RecipientType.TO, address_to);
 	
 		    message.setSubject(subject);
-		    message.setText(text);
+		    if (isHtml) {
+		    	message.setContent(text, "text/html; charset=utf-8");
+		    } else {
+		    	message.setText(text);
+		    }
 		    
 		    Transport transport = session.getTransport("smtps");
 		    transport.connect(host, username, password);

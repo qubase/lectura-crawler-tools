@@ -1,6 +1,5 @@
 package qubase.uploader;
 
-import qubase.engine.Email;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -10,6 +9,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+
+import qubase.engine.Email;
 
 import com.connectionpool.ConnectionPool;
 import com.mongodb.BasicDBObject;
@@ -83,7 +84,7 @@ public class LecturaUploader {
 		} finally {
 			System.out.println(subject);
 			System.out.println(message);
-			Email.send(recipients, subject, message);
+			Email.send(recipients, subject, message, props.getProperty("email-user"), props.getProperty("email-pass"), false);
 		}
 		
 		System.exit(0);

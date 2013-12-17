@@ -124,6 +124,6 @@ public class LecturaCrawlerEngine {
 			text += error + "\n";
 		}
 		
-		Email.send(recipients, "Stopping crawler: " + crawler.getName(), text);
+		Email.send(recipients, "Stopping crawler: " + crawler.getName(), text, props.getProperty("email-user"), props.getProperty("email-pass"), false);
 	}
 }
