@@ -39,6 +39,11 @@ public class LecturaCrawlerStatistics {
 	private static Properties props = new Properties();
 	private static HashMap<Integer, Crawler> crawlers = new HashMap<Integer, Crawler>();
 	
+	private static class Crawler {
+		public String name = null;
+		public String status = null;
+	}
+	
 	public static void main(String[] args) {
 		String emailBody = null;
 		try {
