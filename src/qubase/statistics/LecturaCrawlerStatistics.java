@@ -191,7 +191,7 @@ public class LecturaCrawlerStatistics {
 				tableRow += "<td " + cellStyle + ">" + ((status.equals("1")) ? "ON" : "OFF") + "</td>";
 				tableRow += "<td " + cellStyle + ">" + report.getInt("listingsAllTime") + "</td>";
 				String thisCellStyle = (report.getInt("listings") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
-				tableRow += "<td " + thisCellStyle + ">" + report.getInt("listings") + "</td>";
+				tableRow += "<td " + thisCellStyle + "><b>" + report.getInt("listings") + "</b></td>";
 				thisCellStyle = (report.getInt("price") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("price") + "</td>";
 				thisCellStyle = (report.getInt("currency") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
