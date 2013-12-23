@@ -3,6 +3,7 @@ package qubase.suite;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,6 +28,7 @@ abstract public class Crawler {
 	
 	protected ArrayList<SiteMapLocation> siteMap = new ArrayList<SiteMapLocation>();
 	protected ArrayList<URL> list = new ArrayList<URL>();
+	protected HashSet<URL> blacklist = new HashSet<URL>();
 	protected Status status = new Status();
 	
 	protected Integer ttl = null;
@@ -46,10 +48,10 @@ abstract public class Crawler {
 	}
 	
 	protected class SiteMapLocation {
-		public String url;
+		public URL url;
 		public String name;
 		
-		public SiteMapLocation(String url, String name) {
+		public SiteMapLocation(URL url, String name) {
 			this.url = url;
 			this.name = name;
 		}
@@ -273,6 +275,68 @@ abstract public class Crawler {
         }
 	}
 	
+	protected String loadCustomPage(URL url) {
+		logger.info("Loading custom page: " + url);
+		CloseableHttpResponse response = null;
+		int attempts = 0;
+		int retry_ = (retry == 0) ? 1 : retry;
+		boolean responseOk = false;
+		while (attempts < retry_ && !responseOk) {
+			
+			if (attempts > 0) {
+				try {
+					logger.finest("Going to sleep for " + retryAfter + "ms " + url);
+					Thread.sleep(retryAfter);
+				} catch (InterruptedException e) {
+					//ignore
+					logger.severe("Failed to sleep for " + retryAfter + "ms " + url);
+				}
+				logger.info("Retrying to get page after " + retryAfter + "ms : Attempt " + new Integer(attempts + 1) + "/" + retry + " " + url);
+			}
+			
+			try {	
+				response = LecturaCrawlerSuite.getResponse(url, useProxy);
+			} catch (Exception e) {
+				logger.severe("Failed to retrieve response from custom page: " + e.getMessage());
+			}
+			
+			responseOk = (response != null && response.getStatusLine().getStatusCode() == 200);
+			attempts++;
+		}
+		
+        try {
+            HttpEntity entity = response.getEntity();
+
+            //if the status code is not OK, report a problem
+            if (response.getStatusLine().getStatusCode() != 200) {
+            	Header[] headers = response.getAllHeaders();
+            	String headersStr = response.getStatusLine().toString();
+		        for (int i = 0; i < headers.length; i++) {
+		            headersStr += " | " + headers[i];
+		        }
+		        
+		        logger.warning("Status code not OK: [" + url.toString() + "] " + headersStr);
+		        logger.warning(EntityUtils.toString(entity));
+            }
+            
+            if (entity != null) {
+                return EntityUtils.toString(entity);
+            } else {
+            	return null;
+            }
+            
+        } catch (Exception e) {
+        	logger.severe("Failed to load custom page: [" + url.toString() + "] " + e.getMessage());
+        	return null;
+        } finally {
+        	try {
+				response.close();
+			} catch (IOException e) {
+				logger.severe("Failed to close HTTP response: " + e.getMessage());
+			}
+        }
+	}
+	
 	private boolean listingExists(URL url) {
 		DB db = LecturaCrawlerSuite.getDB();
 		DBCollection collection = db.getCollection("listings");
@@ -369,5 +433,30 @@ abstract public class Crawler {
 	
 	public void setRetryAfter(long retryAfter) {
 		this.retryAfter = retryAfter;
+	}
+	
+	public void addToBlacklist(URL url) {
+		blacklist.add(url);
+	}
+	
+	/**
+	 * adds the site map location only if it's unique - actually if the 'url' property is unique
+	 * @param loc
+	 */
+	public void addToSiteMap(SiteMapLocation loc) {
+		if (isUniqueSiteMapLocation(loc)) {
+			siteMap.add(loc);
+		}
+	}
+	
+	//this is not very effective, but was easy to implement at this stage
+	//and site maps will never contain more than hundreds of elements, mostly tens
+	private boolean isUniqueSiteMapLocation(SiteMapLocation loc) {
+		for (SiteMapLocation item : siteMap) {
+			if (item.url.equals(loc.url)) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

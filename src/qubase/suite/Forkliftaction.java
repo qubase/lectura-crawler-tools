@@ -22,7 +22,7 @@ public class Forkliftaction extends Crawler {
 		} catch (MalformedURLException e) {
 			logger.severe("Failed to init siteMapUrl: [" + baseUrl + "default.aspx" + "] " + e.getMessage());
 		}
-		statusFile = "forkliftaction.status";
+		statusFile = name + ".status";
 	}
 
 	protected void parseSiteMap(String input) {
@@ -46,7 +46,11 @@ public class Forkliftaction extends Crawler {
 			
 			//now i'm in the h2 and want to save the name
 			if (inH2) {
-				siteMap.add(new SiteMapLocation(listLink, line.trim()));
+				try {
+					addToSiteMap(new SiteMapLocation(new URL(listLink), line.trim()));
+				} catch (MalformedURLException e) {
+					logger.severe("Failed to parse URL: " + listLink);
+				}
 				//get out of scope for now
 				inH2 = false;
 				inTheRightDiv = false;

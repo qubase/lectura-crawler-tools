@@ -6,6 +6,8 @@ public class CrawlerFactory {
 			return new Forkliftaction();
 		} else if (portalName.equals("bau-portal")) {
 			return new Bauportal();
+		} else if (portalName.equals("machineryzone")) {
+			return new Machineryzone();
 		} else {
 			throw new IllegalArgumentException("Invalid portal name: " + portalName);
 		}

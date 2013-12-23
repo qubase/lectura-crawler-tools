@@ -1,15 +1,19 @@
 package qubase.suite;
 
 import java.io.File;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 public class CrawlerStack {
 	
@@ -83,5 +87,13 @@ public class CrawlerStack {
 		crawler.setTtl((ttl.isEmpty() || ttl == null) ? null : Integer.parseInt(ttl));
 		crawler.setUseProxy((useProxy.isEmpty() || useProxy == null) ? null : useProxy.equals("1"));
 		crawler.setLogLevel((logLevel.isEmpty() || logLevel == null) ? null : logLevel);
+		
+		NodeList blacklist = (NodeList) xPath.compile("/crawler-config/" + portalName + "/blacklist/url").evaluate(doc, XPathConstants.NODESET);
+		
+		int size = blacklist.getLength();
+		for (int i = 0; i < size; i++) {
+			Element url = (Element) blacklist.item(i);
+			crawler.addToBlacklist(new URL(url.getTextContent()));
+		}
 	}
 }

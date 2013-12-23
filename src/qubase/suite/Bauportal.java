@@ -18,7 +18,7 @@ public class Bauportal extends Crawler {
 		} catch (MalformedURLException e) {
 			logger.severe("Failed to init siteMapUrl: [http://www.bau-portal.com/] " + e.getMessage());
 		}
-		statusFile = "bau-portal.status";
+		statusFile = name + ".status";
 	}
 	
 	@Override
@@ -31,7 +31,11 @@ public class Bauportal extends Crawler {
 		        Matcher  matcher = pattern.matcher(line);
 		        
 		        while (matcher.find()) {
-		        	siteMap.add(new SiteMapLocation(siteMapUrl + matcher.group(1), matcher.group(2)));
+		        	try {
+						addToSiteMap(new SiteMapLocation(new URL(siteMapUrl + matcher.group(1)), matcher.group(2)));
+					} catch (MalformedURLException e) {
+						logger.severe("Failed to parse URL: " + siteMapUrl + matcher.group(1));
+					}
 		        }
 			}
 		}
