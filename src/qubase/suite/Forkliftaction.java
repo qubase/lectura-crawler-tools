@@ -173,7 +173,13 @@ public class Forkliftaction extends Crawler {
 		}
 	}
 	
-	protected String generateListUrlSuffix() {
-		return "&dispcurrency=EUR&page=" + status.page;
+	protected URL modifyUrl(URL originalUrl) {
+		String url = originalUrl.toString() + "&dispcurrency=EUR&page=" + status.page;
+		try {
+			return new URL(url);
+		} catch (MalformedURLException e) {
+			logger.severe("Failed to parse URL: [" + url + "] " + e.getMessage());
+			return originalUrl;
+		}
 	}
 }

@@ -149,8 +149,14 @@ public class Bauportal extends Crawler {
 		}
 	}
 	
-	protected String generateListUrlSuffix() {
-		return "netgross/1/page/" + status.page + "/sort/DESC/sortby/date/";
+	protected URL modifyUrl(URL originalUrl) {
+		String url = originalUrl.toString() + "netgross/1/page/" + status.page + "/sort/DESC/sortby/date/";
+		try {
+			return new URL(url);
+		} catch (MalformedURLException e) {
+			logger.severe("Failed to parse URL: [" + url + "] " + e.getMessage());
+			return originalUrl;
+		}
 	}
 
 }

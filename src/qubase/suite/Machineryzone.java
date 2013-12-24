@@ -89,8 +89,27 @@ public class Machineryzone extends Crawler {
 
 	@Override
 	protected void parseList(String input) {
-		// TODO Auto-generated method stub
-
+		String[] lines = input.split("\\r?\\n");
+		for (String lineIn : lines) {
+			String line = lineIn.trim();
+			if (line.matches("<div><span class=\"right rech-tri\">.*$")) {
+				
+				if (line.indexOf("next page") > 0) {
+					status.nextPageAvailable = true;
+				}
+				
+				Pattern pattern = Pattern.compile("<a href=\"/(used/[^\\.]+?\\.html)\" data-id=\"[0-9]*\">");
+		        Matcher  matcher = pattern.matcher(line);
+		        
+		        while (matcher.find()) {
+		        	try {
+						list.add(new URL(siteMapUrl + matcher.group(1)));
+					} catch (MalformedURLException e) {
+						logger.severe("Failed to parse URL: " + siteMapUrl + matcher.group(1));
+					}
+		        }
+			}
+		}
 	}
 
 	@Override
@@ -100,9 +119,14 @@ public class Machineryzone extends Crawler {
 	}
 
 	@Override
-	protected String generateListUrlSuffix() {
-		// TODO Auto-generated method stub
-		return null;
+	protected URL modifyUrl(URL originalUrl) {
+		String url = originalUrl.toString().replaceAll("/used/[0-9]+/", "/used/" + status.page + "/");
+		try {
+			return new URL(url);
+		} catch (MalformedURLException e) {
+			logger.severe("Failed to parse URL: [" + url + "] " + e.getMessage());
+			return originalUrl;
+		}
 	}
 
 }

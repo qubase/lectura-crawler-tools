@@ -68,7 +68,12 @@ abstract public class Crawler {
 	abstract protected void parseSiteMap(String input);
 	abstract protected void parseList(String input);
 	abstract protected void parseListing(String input);
-	abstract protected String generateListUrlSuffix();
+	/**
+	 * Should modify the list URL to implement the status.page into it to navigate the pager correctly
+	 * @param originalUrl
+	 * @return
+	 */
+	abstract protected URL modifyUrl(URL originalUrl);
 	
 	public String getItem() throws Exception {
 		logger.finest("Item request initiated.");
@@ -102,6 +107,7 @@ abstract public class Crawler {
 					logger.severe(response);
 					return error + response;
 				} else {
+					status.save(statusFile);
 					int size = status.siteMap.size();
 					logger.info("Sitemap loaded successfuly: " + size + " items");
 					
@@ -122,7 +128,7 @@ abstract public class Crawler {
 		if (list.isEmpty() && !status.siteMap.isEmpty()) {
 			try {
 				String coordinates = "[" + status.siteMapIndex + ", " + status.page + ", " + status.pagePosition + "]";
-				URL listUrl = new URL(status.siteMap.get(status.siteMapIndex).url.toString() + generateListUrlSuffix());
+				URL listUrl = modifyUrl(status.siteMap.get(status.siteMapIndex).url);
 				logger.finest("Loading list: " + listUrl + " " + coordinates);
 				loadPage(listUrl, listParser);
 				//if after loading the page list is still empty even after second attempt, we should probably try next category, we are out of range of the pager 
