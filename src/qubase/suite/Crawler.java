@@ -26,7 +26,6 @@ abstract public class Crawler {
 	protected URL siteMapUrl;
 	protected String statusFile;
 	
-	protected ArrayList<SiteMapLocation> siteMap = new ArrayList<SiteMapLocation>();
 	protected ArrayList<URL> list = new ArrayList<URL>();
 	protected HashSet<URL> blacklist = new HashSet<URL>();
 	protected Status status = new Status();
@@ -45,16 +44,6 @@ abstract public class Crawler {
 	
 	protected interface Parser {
 		public void parse(String input);
-	}
-	
-	protected class SiteMapLocation {
-		public URL url;
-		public String name;
-		
-		public SiteMapLocation(URL url, String name) {
-			this.url = url;
-			this.name = name;
-		}
 	}
 	
 	//callback helpers
@@ -93,31 +82,31 @@ abstract public class Crawler {
 			} //else the init was loaded from the serialized status
 		}
 		
+		
 		//clear the sitemap and reset if we are at the end of portal
 		//if the last listing couldn't be loaded, the status was not reset
-		if (!siteMap.isEmpty()) {
-			if (siteMap.size() == status.siteMapIndex) {
+		if (!status.siteMap.isEmpty()) {
+			if (status.siteMap.size() == status.siteMapIndex) {
 				status.reset().save(statusFile);
-				siteMap.clear();
 			}
 		}
 		
 		//load the sitemap if needed
-		if (siteMap.isEmpty()) {
+		if (status.siteMap.isEmpty()) {
 			try {
 				logger.finest("Loading sitemap: " + siteMapUrl);
 				loadPage(siteMapUrl, siteMapParser);
 				
-				if (siteMap.isEmpty()) {
+				if (status.siteMap.isEmpty()) {
 					response = "Failed to load the sitemap - Empty";
 					logger.severe(response);
 					return error + response;
 				} else {
-					int size = siteMap.size();
+					int size = status.siteMap.size();
 					logger.info("Sitemap loaded successfuly: " + size + " items");
 					
 					for (int i = 0; i < size; i++) {
-						SiteMapLocation sml = siteMap.get(i);
+						SiteMapLocation sml = status.siteMap.get(i);
 						logger.finest("Sitemap item #" + i + " : [" + sml.name + "] " + sml.url);
 					}
 				}
@@ -130,10 +119,10 @@ abstract public class Crawler {
 		}
 		
 		//load the list if needed
-		if (list.isEmpty() && !siteMap.isEmpty()) {
+		if (list.isEmpty() && !status.siteMap.isEmpty()) {
 			try {
 				String coordinates = "[" + status.siteMapIndex + ", " + status.page + ", " + status.pagePosition + "]";
-				URL listUrl = new URL(siteMap.get(status.siteMapIndex).url.toString() + generateListUrlSuffix());
+				URL listUrl = new URL(status.siteMap.get(status.siteMapIndex).url.toString() + generateListUrlSuffix());
 				logger.finest("Loading list: " + listUrl + " " + coordinates);
 				loadPage(listUrl, listParser);
 				//if after loading the page list is still empty even after second attempt, we should probably try next category, we are out of range of the pager 
@@ -153,7 +142,7 @@ abstract public class Crawler {
 					return error + response;
 				}
 			} catch (Exception e) {
-				response = "Failed to load the list: [" + siteMap.get(status.siteMapIndex).url + "] " + e.getMessage();
+				response = "Failed to load the list: [" + status.siteMap.get(status.siteMapIndex).url + "] " + e.getMessage();
 				logger.severe(response);
 				status.nextPage().save(statusFile);
 				return error + response;
@@ -188,11 +177,9 @@ abstract public class Crawler {
 					} else {
 						status.nextCategory().save(statusFile);
 						list.clear();
-						if (siteMap.size() == status.siteMapIndex) {
+						if (status.siteMap.size() == status.siteMapIndex) {
 							status.reset().save(statusFile);
-							siteMap.clear();
 						}
-						siteMap.clear();
 					}
 				} else {
 					status.pagePosition++;
@@ -445,14 +432,14 @@ abstract public class Crawler {
 	 */
 	public void addToSiteMap(SiteMapLocation loc) {
 		if (isUniqueSiteMapLocation(loc)) {
-			siteMap.add(loc);
+			status.siteMap.add(loc);
 		}
 	}
 	
 	//this is not very effective, but was easy to implement at this stage
 	//and site maps will never contain more than hundreds of elements, mostly tens
 	private boolean isUniqueSiteMapLocation(SiteMapLocation loc) {
-		for (SiteMapLocation item : siteMap) {
+		for (SiteMapLocation item : status.siteMap) {
 			if (item.url.equals(loc.url)) {
 				return false;
 			}

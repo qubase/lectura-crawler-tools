@@ -89,7 +89,7 @@ public class Forkliftaction extends Crawler {
 		
 		try {
 			currentListing.setUrl(list.get(status.pagePosition).toString());
-			currentListing.setCategory(siteMap.get(status.siteMapIndex).name);
+			currentListing.setCategory(status.siteMap.get(status.siteMapIndex).name);
 			currentListing.setCatLang("EN");
 		} catch (Exception e) {
 			//ignore, this is a test call
