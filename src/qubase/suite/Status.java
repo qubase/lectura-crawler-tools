@@ -61,6 +61,7 @@ public class Status implements Serializable {
 			pagePosition = storedStatus.pagePosition;
 			init = storedStatus.init;
 			nextPageAvailable = storedStatus.nextPageAvailable;
+			siteMap = storedStatus.siteMap;
 			
 			logger.info("Status loaded with coordinates: [" + siteMapIndex + ", " + page + ", " + pagePosition + "]");
 			
