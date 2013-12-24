@@ -1,6 +1,7 @@
 config.properties
 crawler-config.xml
 build.xml
+*.status
 
 #################
 ## Eclipse
