@@ -19,8 +19,8 @@ public class Crawler {
 	private URL url = null;
 	private int ttl = 0;
 	
-	private int errorsInRow = 0;
-	private ArrayList<String> errors = new ArrayList<String>();
+	private static int errorsInRow = 0;
+	private static ArrayList<String> errors = new ArrayList<String>();
 	private int errorLimit = 10;
 	
 	private boolean isPublished = true;
@@ -72,8 +72,14 @@ public class Crawler {
 				}
 			}
 			
-			if (sleep > 0 && !record.isDuplicate()) {
-				Thread.sleep(sleep);
+			try {
+				if (sleep > 0 && !record.isDuplicate()) {
+					Thread.sleep(sleep);
+				}
+			} catch (NullPointerException e) {
+				if (sleep > 0) {
+					Thread.sleep(sleep);
+				}
 			}
 		}
 		
