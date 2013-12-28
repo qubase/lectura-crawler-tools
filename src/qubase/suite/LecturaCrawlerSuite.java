@@ -58,8 +58,8 @@ public class LecturaCrawlerSuite {
         server.setExecutor(null); // creates a default executor
         server.start();
 		
-//		Bauportal b = new Bauportal();
-//		b.testListing(new URL("https://mail.google.com/mail/u/0/?shva=1#inbox"));
+//		Machineryzone b = new Machineryzone();
+//		b.testListing(new URL("http://www.machineryzone.eu/used/track-excavator/4171542/doosan-dx140lc.html"));
 	}	
 	
 	public static void init() throws Exception {
