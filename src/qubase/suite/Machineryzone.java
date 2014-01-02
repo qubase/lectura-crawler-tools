@@ -252,7 +252,7 @@ public class Machineryzone extends Crawler {
 					 */
 					
 					String regionZip = regionZipCountry.replaceAll("^(.*?)\\s-\\s.*$", "$1");
-					String zip = regionZip.replaceAll("^.*?([-A-Z0-9]{2,3})(\\s)?([A-Z0-9]{2,3})?(\\s?)([A-Z0-9]{2,3})($|\\s.*$)", "$1$2$3$4$5");
+					String zip = regionZip.replaceAll("^.*?([-A-Z0-9]{2,3})(\\s)?([-A-Z0-9]{2,3})?(\\s?)([A-Z0-9]{2,3})($|\\s.*$)", "$1$2$3$4$5");
 					String region = null;
 					
 					//no zip recognized, apparently it is not there

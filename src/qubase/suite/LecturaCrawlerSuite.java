@@ -53,14 +53,14 @@ public class LecturaCrawlerSuite {
 	public static void main(String[] args) throws Exception {
 		init();
 		
-		HttpServer server = HttpServer.create(new InetSocketAddress(Integer.parseInt(props.getProperty("port"))), 0);
-        server.createContext("/suite", new EngineRequestHandler());
-        server.setExecutor(null); // creates a default executor
-        server.start();
+//		HttpServer server = HttpServer.create(new InetSocketAddress(Integer.parseInt(props.getProperty("port"))), 0);
+//        server.createContext("/suite", new EngineRequestHandler());
+//        server.setExecutor(null); // creates a default executor
+//        server.start();
 		
-//		Machineryzone b = new Machineryzone();
-//		b.testListing(new URL("http://www.machineryzone.eu/used/mini-digger/3811778/Hitachi-EX135UR.html"));
-//		System.exit(0);
+		Machineryzone b = new Machineryzone();
+		b.testListing(new URL("http://www.machineryzone.eu/used/mini-digger/3825715/takeuchi-tb-135.html"));
+		System.exit(0);
 	}	
 	
 	public static void init() throws Exception {

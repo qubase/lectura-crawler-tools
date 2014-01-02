@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 
@@ -246,7 +247,7 @@ abstract public class Crawler {
             HttpEntity entity = response.getEntity();
 
             //if the status code is not OK, report a problem
-            if (response.getStatusLine().getStatusCode() != 200) {
+            if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
             	Header[] headers = response.getAllHeaders();
             	String headersStr = response.getStatusLine().toString();
 		        for (int i = 0; i < headers.length; i++) {
