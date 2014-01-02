@@ -113,12 +113,22 @@ public class LecturaCrawlerSuite {
             
             request = new HttpGet(get);
             request.setConfig(config);
-            response = httpClient.execute(target, request);
+            
+            try {
+            	response = httpClient.execute(target, request);
+            } finally {
+            	request.releaseConnection();
+            }
 		} else {
 			logger.finest("Starting request: " + url);
 			
 			request = new HttpGet(url.toString());
-			response = httpClient.execute(request);
+			
+			try {
+				response = httpClient.execute(request);
+			} finally {
+				request.releaseConnection();
+			}
 		}
 		
 		return response;
