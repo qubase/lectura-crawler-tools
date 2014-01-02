@@ -243,7 +243,7 @@ public class Machineryzone extends Crawler {
 					 *	1. zip can contain big letters, numbers and dash
 					 *	2. zip consists of 1 to 3 parts separated by a blank character
 					 *	3. zip and region can be in arbitrary order, e.g. Dungannon BT71 6NL or even BT71 6NL Dungannon
-					 *	4. zip and region are followed by the country and are separated from it by a blank dash blank char. sequence
+					 *	4. zip and region are followed by the country and are separated from it by a "blank dash blank" char. sequence
 					 *	5. the part after the dash and dash itself can be ignored, country is parsed from a different source
 					 *	6. zip must be max 9 chars long excluding blank chars
 					 *	7. zip must either be followed by the end of the string or by a blank character
@@ -256,7 +256,7 @@ public class Machineryzone extends Crawler {
 					String region = null;
 					
 					//no zip recognized, apparently it is not there
-					if (zip.equals(regionZip)) {
+					if (zip.equals(regionZip) || regionZip.startsWith(". ")) {
 						zip = null;
 						region = (regionZip.startsWith(". ")) ? regionZip.replaceFirst("\\. ", "").trim() : regionZip;
 					} else {
