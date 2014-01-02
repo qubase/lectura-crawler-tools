@@ -59,7 +59,8 @@ public class LecturaCrawlerSuite {
         server.start();
 		
 //		Machineryzone b = new Machineryzone();
-//		b.testListing(new URL("http://www.machineryzone.eu/used/track-excavator/4171542/doosan-dx140lc.html"));
+//		b.testListing(new URL("http://www.machineryzone.eu/used/mini-digger/3811778/Hitachi-EX135UR.html"));
+//		System.exit(0);
 	}	
 	
 	public static void init() throws Exception {
@@ -116,7 +117,8 @@ public class LecturaCrawlerSuite {
             
             try {
             	response = httpClient.execute(target, request);
-            } finally {
+            } catch (Exception e) {
+            	logger.severe("Request executuion failed: [" + get + "] " + e.getMessage());
             	request.releaseConnection();
             }
 		} else {
@@ -126,9 +128,10 @@ public class LecturaCrawlerSuite {
 			
 			try {
 				response = httpClient.execute(request);
-			} finally {
-				request.releaseConnection();
-			}
+			} catch (Exception e) {
+            	logger.severe("Request executuion failed: [" + url.toString() + "] " + e.getMessage());
+            	request.releaseConnection();
+            }
 		}
 		
 		return response;

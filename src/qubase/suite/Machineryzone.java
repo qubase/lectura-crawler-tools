@@ -144,16 +144,16 @@ public class Machineryzone extends Crawler {
 		
 		String[] lines = input.split("\\r?\\n");
 		
-		String regexMake = "^.*?<b>Make</b>.*?class=\"droite\"><a\\s*href=\"[^\"]+\">(.*?)</a>.*$"; //parse brand
-		String regexModel = "^.*?<b>Model</b>.*?class=\"droite\">(.*?)</td>.*$"; //parse model name
-		String regexYear = "^.*?<b>Year</b>.*?class=\"droite\">([0-9]+)</td>.*$"; //parse year of manufacture
-		String regexHours = "^.*?<b>Hours</b>.*?class=\"droite\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
-		String regexSerial = "^.*?<b>Serial&nbsp;number</b>.*?class=\"droite\">(.*?)</td>.*$"; //parse serial nr.
-		String regexPrice = "^.*?<b>Price\\s*excl\\.\\s*VAT</b>&nbsp;:\\s*</td><td\\s*class=\"droite\">([0-9\\.,]+).*$"; //parse price
+		String regexMake = "^.*?<b>Make</b>.*?class=\"droite\\s*[a-zA-Z]*\"><a\\s*href=\"[^\"]+\">(.*?)</a>.*$"; //parse brand
+		String regexModel = "^.*?<b>Model</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse model name
+		String regexYear = "^.*?<b>Year</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9]+)</td>.*$"; //parse year of manufacture
+		String regexHours = "^.*?<b>Hours</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
+		String regexSerial = "^.*?<b>Serial&nbsp;number</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse serial nr.
+		String regexPrice = "^.*?<b>Price\\s*excl\\.\\s*VAT</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+).*$"; //parse price
 		String regexCurrency = "^.*?<option\\s*value=[A-Z]{3}\\s*selected\\s*>([A-Z]{3})</option>.*$"; //parse currency
-		String regexLocation = "^.*?<b>Location</b>.*?class=\"droite\">(.*?)</td>.*$"; //parse country
+		String regexLocation = "^.*?<b>Location</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse country
 		String regexDate = "^.*?<div\\s*class=\"enteteCadre\">.*\\s([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})</div>.*$"; //parse date
-		String regexAddress = "^.*?<b>Address</b>.*?class=\"droite\">(.*?)</td>.*$"; //parse address
+		String regexAddress = "^.*?<b>Address</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse address
 		
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
@@ -261,6 +261,13 @@ public class Machineryzone extends Crawler {
 						region = (regionZip.startsWith(". ")) ? regionZip.replaceFirst("\\. ", "").trim() : regionZip;
 					} else {
 						region = regionZip.replaceAll(zip, "").trim();
+					}
+					
+					//if the region still contains some numbers, it's wrong, rather leave it empty
+					//it was parsed in a wrong way most probably, region wouldn't normally contain numbers
+					if (region.matches("([0-9]+\\s.*|.*\\s[0-9]+|.*[0-9]+.*)")) {
+						zip = null;
+						region = null;
 					}
 					
 					if (zip != null && !zip.isEmpty()) {
