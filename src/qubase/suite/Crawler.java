@@ -223,6 +223,23 @@ abstract public class Crawler {
 		while (attempts < retry_ && !responseOk) {
 			
 			if (attempts > 0) {
+				
+				//consume the entity, close the previous response -> release the resources (connection, ...)
+				if (response != null) {
+					try {
+						//this will consume the entity and release the resources automatically, e.g. connection
+						EntityUtils.consume(response.getEntity());
+					} catch (IOException e) {
+						logger.severe("Failed to consume the entity: " + e.getMessage());
+					}
+					
+					try {
+						response.close();
+					} catch (IOException e) {
+						logger.severe("Failed to close HTTP response: " + e.getMessage());
+					}
+				}
+				
 				try {
 					logger.finest("Going to sleep for " + retryAfter + "ms " + url);
 					Thread.sleep(retryAfter);
@@ -266,6 +283,7 @@ abstract public class Crawler {
         	logger.severe("Failed to load page: [" + url.toString() + "] " + e.getMessage());
         } finally {
         	try {
+        		//this will consume the entity and release the resources automatically, e.g. connection
 				EntityUtils.consume(response.getEntity());
 			} catch (IOException e) {
 				logger.severe("Failed to consume the entity: " + e.getMessage());
