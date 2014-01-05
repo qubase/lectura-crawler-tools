@@ -266,6 +266,12 @@ abstract public class Crawler {
         	logger.severe("Failed to load page: [" + url.toString() + "] " + e.getMessage());
         } finally {
         	try {
+				EntityUtils.consume(response.getEntity());
+			} catch (IOException e) {
+				logger.severe("Failed to consume the entity: " + e.getMessage());
+			}
+        	
+        	try {
 				response.close();
 			} catch (IOException e) {
 				logger.severe("Failed to close HTTP response: " + e.getMessage());

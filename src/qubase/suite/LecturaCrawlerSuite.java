@@ -118,8 +118,7 @@ public class LecturaCrawlerSuite {
             try {
             	response = httpClient.execute(target, request);
             } catch (Exception e) {
-            	logger.severe("Request executuion failed: [" + get + "] " + e.getMessage());
-            	request.releaseConnection();
+            	logger.severe("Request execution failed: [" + get + "] " + e.getMessage());
             }
 		} else {
 			logger.finest("Starting request: " + url);
@@ -129,8 +128,7 @@ public class LecturaCrawlerSuite {
 			try {
 				response = httpClient.execute(request);
 			} catch (Exception e) {
-            	logger.severe("Request executuion failed: [" + url.toString() + "] " + e.getMessage());
-            	request.releaseConnection();
+            	logger.severe("Request execution failed: [" + url.toString() + "] " + e.getMessage());
             }
 		}
 		
@@ -317,8 +315,18 @@ public class LecturaCrawlerSuite {
 	
 	private static void configureHttpClient() {
 		PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-		connectionManager.setMaxTotal(100);
-		connectionManager.setDefaultMaxPerRoute(10);
+		
+		Integer maxTotal = 100;
+		Integer maxPerRoute = 10;
+		try {
+			maxTotal = Integer.parseInt(props.getProperty("max-connections"));
+			maxPerRoute = Integer.parseInt(props.getProperty("max-connections-per-route"));
+		} catch (Exception ignore) {
+			//ignore, use default values
+		}
+		
+		connectionManager.setMaxTotal(maxTotal);
+		connectionManager.setDefaultMaxPerRoute(maxPerRoute);
 		
 		defaultRequestConfig = RequestConfig.custom()
         		.setConnectTimeout(connectionTimeout)
