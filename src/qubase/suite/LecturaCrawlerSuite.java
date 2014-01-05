@@ -118,7 +118,7 @@ public class LecturaCrawlerSuite {
             try {
             	response = httpClient.execute(target, request);
             } catch (Exception e) {
-            	logger.severe("Request execution failed: [" + get + "] " + e.getMessage());
+            	logger.severe("Request execution failed: [" + url + "] " + e.getMessage());
             }
 		} else {
 			logger.finest("Starting request: " + url);

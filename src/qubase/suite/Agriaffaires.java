@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import org.htmlcleaner.HtmlCleaner;
 import org.htmlcleaner.TagNode;
 
-public class Machineryzone extends Crawler {
+public class Agriaffaires extends Crawler {
 	
 	//save already loaded links when traversing sitemap to not to visit the same more times
 	//e.g. backhoe loaders are present on more than one spot
@@ -19,22 +19,20 @@ public class Machineryzone extends Crawler {
 	
 	private String currentCategory = null;
 	
-	public Machineryzone() {
+	public Agriaffaires() {
 		super();
-		name = "machineryzone";
+		name = "agriaffaires";
 		
 		try {
-			siteMapUrl = new URL("http://www.machineryzone.eu/");
+			siteMapUrl = new URL("http://www.agriaffaires.de/");
 		} catch (MalformedURLException e) {
-			logger.severe("Failed to init siteMapUrl: [http://www.machineryzone.eu/] " + e.getMessage());
+			logger.severe("Failed to init siteMapUrl: [http://www.agriaffaires.de/] " + e.getMessage());
 		}
 		statusFile = name + ".status";
 	}
 
 	@Override
 	protected void parseSiteMap(String input) {
-		//TODO parse this one instead of the recursive solution
-		//http://www.machineryzone.eu/rubriques.asp?action=consulter
 		
 		String[] lines = input.split("\\r?\\n");
 		
@@ -78,7 +76,7 @@ public class Machineryzone extends Crawler {
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
 			if (line.matches("^</script><td><table\\s*id=\"arianeHaut\".*$")) {
-				Pattern pattern = Pattern.compile("<a href=/(used/1/[^\\.]+\\.html) class=\"lienSsRub\">([^<]+?)</a>");
+				Pattern pattern = Pattern.compile("<a href=/(gebrauchte/1/[^\\.]+\\.html) class=\"lienSsRub\">([^<]+?)</a>");
 				Matcher matcher = pattern.matcher(line);
 		        
 		        while (matcher.find()) {
@@ -101,18 +99,18 @@ public class Machineryzone extends Crawler {
 			String line = lineIn.trim();
 			
 			//parse the category name here, use it in parseListing later
-			String regexCategory = "^.*?<td\\s*id=\"arianeHautLiensNav\"><a\\s*href=\"/\">Home</a>.*?:\\s*<a\\s*href=[^>]+>([^>]+)</a></td>.*$";
+			String regexCategory = "^.*?<td\\s*id=\"arianeHautLiensNav\"><a\\s*href=\"/\">Start</a>.*?:\\s*<a\\s*href=[^>]+>([^>]+)</a></td>.*$";
 			if (line.matches(regexCategory)) {
 				currentCategory = line.replaceAll(regexCategory, "$1");
 			}
 			
 			if (line.matches("<div><span class=\"right rech-tri\">.*$")) {
 				
-				if (line.indexOf("next page") > 0) {
+				if (line.indexOf("nächste Seite") > 0) {
 					status.nextPageAvailable = true;
 				}
 				
-				Pattern pattern = Pattern.compile("<a href=\"/(used/[^\\.]+?\\.html|new/[^\\.]+?\\.html)\".*?data-id=\"[0-9]*\".*?>");
+				Pattern pattern = Pattern.compile("<a href=\"/(gebrauchte/[^\\.]+?\\.html|neue/[^\\.]+?\\.html)\".*?data-id=\"[0-9]*\".*?>");
 		        Matcher  matcher = pattern.matcher(line);
 		        
 		        while (matcher.find()) {
@@ -144,16 +142,16 @@ public class Machineryzone extends Crawler {
 		
 		String[] lines = input.split("\\r?\\n");
 		
-		String regexMake = "^.*?<b>Make</b>.*?class=\"droite\\s*[a-zA-Z]*\"><a\\s*href=\"[^\"]+\">(.*?)</a>.*$"; //parse brand
-		String regexModel = "^.*?<b>Model</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse model name
-		String regexYear = "^.*?<b>Year</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9]+)</td>.*$"; //parse year of manufacture
-		String regexHours = "^.*?<b>Hours</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
-		String regexSerial = "^.*?<b>Serial&nbsp;number</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse serial nr.
-		String regexPrice = "^.*?<b>Price\\s*excl\\.\\s*VAT</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+).*$"; //parse price
+		String regexMake = "^.*?<b>Marke</b>.*?class=\"droite\\s*[a-zA-Z]*\"><a\\s*href=\"[^\"]+\">(.*?)</a>.*$"; //parse brand
+		String regexModel = "^.*?<b>Modell</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse model name
+		String regexYear = "^.*?<b>Jahr</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9]+)</td>.*$"; //parse year of manufacture
+		String regexHours = "^.*?<b>Stunde</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
+		String regexSerial = "^.*?<b>Fahrgestellnummer</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse serial nr.
+		String regexPrice = "^.*?<b>Nettopreis</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+).*$"; //parse price
 		String regexCurrency = "^.*?<option\\s*value=[A-Z]{3}\\s*selected\\s*>([A-Z]{3})</option>.*$"; //parse currency
-		String regexLocation = "^.*?<b>Location</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse country
+		String regexLocation = "^.*?<b>Standort</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse country
 		String regexDate = "^.*?<div\\s*class=\"enteteCadre\">.*\\s([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})</div>.*$"; //parse date
-		String regexAddress = "^.*?<b>Address</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse address
+		String regexAddress = "^.*?<b>Adresse</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse address
 		
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
@@ -284,7 +282,7 @@ public class Machineryzone extends Crawler {
 
 	@Override
 	protected URL modifyUrl(URL originalUrl) {
-		String url = originalUrl.toString().replaceAll("/used/[0-9]+/", "/used/" + status.page + "/");
+		String url = originalUrl.toString().replaceAll("/gebrauchte/[0-9]+/", "/gebrauchte/" + status.page + "/");
 		try {
 			return new URL(url);
 		} catch (MalformedURLException e) {
