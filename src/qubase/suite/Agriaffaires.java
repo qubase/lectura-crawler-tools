@@ -51,6 +51,10 @@ public class Agriaffaires extends Crawler {
 					for (Object level1link : level1links) {
 						URL level1url = new URL(siteMapUrl + ((TagNode)level1link).getAttributeByName("href").replaceFirst("/", ""));
 						
+						if (blacklist.contains(level1url) || personalBlacklist.contains(level1url)) {
+			        		continue;
+			        	}
+						
 						traverse(level1url, null);
 						personalBlacklist.clear();//this was needed only for traversing, clear it for the next traversing
 					}
