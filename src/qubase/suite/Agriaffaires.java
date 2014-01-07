@@ -151,7 +151,7 @@ public class Agriaffaires extends Crawler {
 		String regexYear = "^.*?<b>Jahr</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9]+)</td>.*$"; //parse year of manufacture
 		String regexHours = "^.*?<b>Stunden</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
 		String regexSerial = "^.*?<b>Fahrgestellnummer</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse serial nr.
-		String regexPrice = "^.*?<b>Nettopreis</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\., ]+).*$"; //parse price
+		String regexPrice = "^.*?<b>Nettopreis</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\., &nbsp;]+).*$"; //parse price
 		String regexCurrency = "^.*?<option\\s*value=[A-Z]{3}\\s*selected\\s*>([A-Z]{3})</option>.*$"; //parse currency
 		String regexLocation = "^.*?<b>Standort</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse country
 		String regexDate = "^.*?<div\\s*class=\"enteteCadre\">.*\\s([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})</div>.*$"; //parse date
@@ -193,7 +193,7 @@ public class Agriaffaires extends Crawler {
 			
 			//this will never be N/A due to the regex
 			if (line.matches(regexPrice)) {
-				currentListing.setPrice(line.replaceAll(regexPrice, "$1"));
+				currentListing.setPrice(line.replaceAll(regexPrice, "$1").replaceAll("&nbsp;", ""));
 			}
 			
 			//this will never be N/A due to the regex
