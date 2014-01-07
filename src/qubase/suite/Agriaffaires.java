@@ -149,9 +149,9 @@ public class Agriaffaires extends Crawler {
 		String regexMake = "^.*?<b>Marke</b>.*?class=\"droite\\s*[a-zA-Z]*\"><a\\s*href=\"[^\"]+\">(.*?)</a>.*$"; //parse brand
 		String regexModel = "^.*?<b>Modell</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse model name
 		String regexYear = "^.*?<b>Jahr</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9]+)</td>.*$"; //parse year of manufacture
-		String regexHours = "^.*?<b>Stunde</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
+		String regexHours = "^.*?<b>Stunden</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
 		String regexSerial = "^.*?<b>Fahrgestellnummer</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse serial nr.
-		String regexPrice = "^.*?<b>Nettopreis</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+).*$"; //parse price
+		String regexPrice = "^.*?<b>Nettopreis</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\., ]+).*$"; //parse price
 		String regexCurrency = "^.*?<option\\s*value=[A-Z]{3}\\s*selected\\s*>([A-Z]{3})</option>.*$"; //parse currency
 		String regexLocation = "^.*?<b>Standort</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse country
 		String regexDate = "^.*?<div\\s*class=\"enteteCadre\">.*\\s([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})</div>.*$"; //parse date
@@ -296,7 +296,7 @@ public class Agriaffaires extends Crawler {
 	}
 	
 	private boolean isNotAvailableValue(String val) {
-		return val.trim().equals("N/A");
+		return val.trim().equals("kA");
 	}
 
 }
