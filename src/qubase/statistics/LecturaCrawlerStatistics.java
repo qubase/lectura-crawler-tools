@@ -42,6 +42,7 @@ public class LecturaCrawlerStatistics {
 	private static class Crawler {
 		public String name = null;
 		public String status = null;
+		public String upload = null;
 	}
 	
 	public static void main(String[] args) {
@@ -107,15 +108,18 @@ public class LecturaCrawlerStatistics {
 		
 		String titleOK = "Seems to be OK";
 		String titleOFF = "This one's OFF";
-		String titleFuckedUp = "There's a problem";
+		String titleFuckedUp = "There might be a problem";
+		String titleUploadOFF = "Testing. No upload to Lectura";
 		String imgOK = "<img src=\"https://dl.dropboxusercontent.com/u/6521559/117-todo.png\" title=\"" + titleOK + "\"/>";
 		String imgOFF = "<img src=\"https://dl.dropboxusercontent.com/u/6521559/21-skull.png\" title=\"" + titleOFF + "\"/>";
 		String imgFuckedUp = "<img src=\"https://dl.dropboxusercontent.com/u/6521559/25-weather.png\" title=\"" + titleFuckedUp + "\"/>";
+		String imgUploadOFF = "<img src=\"https://dl.dropboxusercontent.com/u/6521559/54-lock.png\" title=\"" + titleUploadOFF + "\"/>";
 		
 		String tableTail = "<tr><td colspan=\"" + colspan + "\">"
 				+ imgOK + "&nbsp;&nbsp;&nbsp;" + titleOK + "&nbsp;&nbsp;|&nbsp;&nbsp;"
 				+ imgOFF + "&nbsp;&nbsp;&nbsp;" + titleOFF + "&nbsp;&nbsp;|&nbsp;&nbsp;"
-				+ imgFuckedUp + "&nbsp;&nbsp;&nbsp;" + titleFuckedUp
+				+ imgFuckedUp + "&nbsp;&nbsp;&nbsp;" + titleFuckedUp + "&nbsp;&nbsp;|&nbsp;&nbsp;"
+				+ imgUploadOFF + "&nbsp;&nbsp;&nbsp;" + titleUploadOFF
 				+ "</td></tr>";
 		tableTail += "</table>\n";
 		
@@ -158,15 +162,18 @@ public class LecturaCrawlerStatistics {
 				
 				String name = "N/A";
 				String status = "N/A";
+				String upload = "N/A";
 				if (crawlers.containsKey(portalId)) {
 					name = crawlers.get(portalId).name;
 					status = crawlers.get(portalId).status;
+					upload = crawlers.get(portalId).upload;
 				}
 				
 				
 				String defaultStyle = "style=\"border-bottom: 1px solid #404040; background: #b2ffb2; color: #505050\"";
 				String offStyle = "style=\"border-bottom: 1px solid #404040; background: #efefef; color: #a0a0a0\"";
 				String alarmStyle = "style=\"border-bottom: 1px solid #404040; background: #ffb0b0; color: #505050\"";
+				String uploadOffStyle = "style=\"border-bottom: 1px solid #404040; background: #fff5b2; color: #505050\"";
 				
 				boolean alarm = report.getInt("listings") == 0
 						|| report.getInt("price") == 0
@@ -180,13 +187,17 @@ public class LecturaCrawlerStatistics {
 						? offStyle 
 						: (alarm)
 							? alarmStyle
-							: defaultStyle;
+							: (upload.equals("1"))
+								? uploadOffStyle
+								: defaultStyle;
 				
 				String img = (!status.equals("1")) 
 						? imgOFF 
 						: (alarm)
 							? imgFuckedUp
-							: imgOK;
+							: (upload.equals("1"))
+								? imgUploadOFF
+								: imgOK;
 				
 				String alarmCellStyle = "style=\"border-bottom: 1px solid #404040; background: #ff6666; color: #505050\"";
 				String tableRow = "<tr>";
@@ -195,24 +206,38 @@ public class LecturaCrawlerStatistics {
 				tableRow += "<td " + cellStyle + "><b>" + name + "</b></td>";
 				tableRow += "<td " + cellStyle + ">" + ((status.equals("1")) ? "ON" : "OFF") + "</td>";
 				tableRow += "<td " + cellStyle + ">" + report.getInt("listingsAllTime") + "</td>";
+				
 				String thisCellStyle = (report.getInt("listings") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + "><b>" + report.getInt("listings") + "</b></td>";
+				
 				thisCellStyle = (report.getInt("price") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("price") + "</td>";
+				
 				thisCellStyle = (report.getInt("currency") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("currency") + "</td>";
+				
 				thisCellStyle = (report.getInt("year") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("year") + "</td>";
+				
 				thisCellStyle = (report.getInt("counter") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("counter") + "</td>";
+				
 				thisCellStyle = (report.getInt("category") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("category") + "</td>";
+				
 				thisCellStyle = (report.getInt("serial") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("serial") + "</td>";
-				thisCellStyle = (report.getInt("country") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
+				
+				boolean tooFewCountriesCollected = false;
+				if (report.getInt("listings") != 0) {
+					tooFewCountriesCollected = (report.getInt("listings") / 2) > report.getInt("country");
+				}
+				thisCellStyle = (report.getInt("country") == 0 || tooFewCountriesCollected) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("country") + "</td>";
+				
 				thisCellStyle = (report.getInt("region") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("region") + "</td>";
+				
 				thisCellStyle = (report.getInt("zip") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("zip") + "</td>";
 				tableRow += "</tr>\n";
@@ -243,11 +268,10 @@ public class LecturaCrawlerStatistics {
 		for (int i = 0; i < size; i++) {
 			Element c = (Element) _crawlers.item(i);
 			Integer id = Integer.parseInt(c.getAttribute("id"));
-			String status = c.getAttribute("status");
-			String name = c.getElementsByTagName("name").item(0).getTextContent();
 			Crawler crawler = new Crawler();
-			crawler.name = name;
-			crawler.status = status;
+			crawler.name = c.getElementsByTagName("name").item(0).getTextContent();
+			crawler.status = c.getAttribute("status");
+			crawler.upload = c.getAttribute("upload");
 			crawlers.put(id, crawler);
 		}
 	}
