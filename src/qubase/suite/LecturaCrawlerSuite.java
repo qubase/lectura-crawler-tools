@@ -58,8 +58,8 @@ public class LecturaCrawlerSuite {
         server.setExecutor(null); // creates a default executor
         server.start();
 		
-//		Machineryzone b = new Machineryzone();
-//		b.testListing(new URL("http://www.machineryzone.eu/used/mini-digger/3825715/takeuchi-tb-135.html"));
+//		Bauportal b = new Bauportal();
+//		b.testListing(new URL("http://www.bau-portal.com/details/Komplettraeder/ARS-Raederbau-Pflegeraeder-Case-IHC/2016627/"));
 //		System.exit(0);
 	}	
 	

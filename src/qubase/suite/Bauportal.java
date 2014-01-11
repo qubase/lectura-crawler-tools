@@ -85,7 +85,7 @@ public class Bauportal extends Crawler {
 		String regexYear = "^.*?<td>Baujahr</td><td>([0-9]+)</td>.*$"; //parse year of manufacture
 		String regexCurrPrice = "^.*?<span\\s*itemprop=\"price\">([0-9,\\.]*)\\s*([A-Z]*)</span>.*$"; //parse currency and price;
 		String regexHours = "^.*?<td>Betriebsstunden</td><td>(.*?)</td>.*$"; //parse machine hours
-		String regexZipRegionCountry = "^.*?<div class='separated'>.*?</div>(<div>.*?</div>){0,}(<div>[-A-Za-z0-9]*\\s*.*?</div>)(<div>.*?</div>)$";
+		String regexZipRegionCountry = "^.*?<div class='(separated|highlighted)'>.*?</div>(<div>.*?</div>){0,}(<div>[-A-Za-z0-9]*\\s*.*?</div>)(<div>.*?</div>)$";
 		String regexCategory = "<ul class=\"breadcrumb_detail\".*?Startseite.*?&nbsp;>&nbsp;.*?&nbsp;>&nbsp;.*?<a.*?title=\"(.*?)\"\\s*href.*?>.*$";
 		
 		boolean inH1 = false;
@@ -123,9 +123,9 @@ public class Bauportal extends Crawler {
 			}
 			
 			if (line.matches(regexZipRegionCountry) && !zipRegionCountryDone) {
-				String zip = line.replaceAll(regexZipRegionCountry, "$2").replaceAll("<div>([-A-Za-z0-9]*)(\\s?)([A-Za-z]*[0-9]+[A-Za-z]*\\s|[A-Z]{1,3}\\s)?\\s*(.*?)</div>", "$1$2$3");
-				String region = line.replaceAll(regexZipRegionCountry, "$2").replaceAll("<div>([-A-Za-z0-9]*)(\\s?)([A-Za-z]*[0-9]+[A-Za-z]*\\s|[A-Z]{1,3}\\s)?\\s*(.*?)</div>", "$4");
-				String country = line.replaceAll(regexZipRegionCountry, "$3").replaceAll("<div>(.*?)</div>", "$1");
+				String zip = line.replaceAll(regexZipRegionCountry, "$3").replaceAll("<div>([-A-Za-z0-9]*)(\\s?)([A-Za-z]*[0-9]+[A-Za-z]*\\s|[A-Z]{1,3}\\s)?\\s*(.*?)</div>", "$1$2$3").trim();
+				String region = line.replaceAll(regexZipRegionCountry, "$3").replaceAll("<div>([-A-Za-z0-9]*)(\\s?)([A-Za-z]*[0-9]+[A-Za-z]*\\s|[A-Z]{1,3}\\s)?\\s*(.*?)</div>", "$4").trim();
+				String country = line.replaceAll(regexZipRegionCountry, "$4").replaceAll("<div>(.*?)</div>", "$1").trim();
 				
 				if (zip != null && !zip.isEmpty()) {
 					currentListing.setZip(zip);
