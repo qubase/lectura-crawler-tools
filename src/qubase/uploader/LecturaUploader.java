@@ -1,5 +1,6 @@
 package qubase.uploader;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -7,8 +8,19 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import qubase.engine.Email;
 
@@ -34,6 +46,13 @@ public class LecturaUploader {
 	private static List<?> portals;
 	
 	private static String message = null;
+	
+	private static HashMap<Integer, Crawler> crawlers = new HashMap<Integer, Crawler>();
+	
+	private static class Crawler {
+		public String status = null;
+		public String upload = null;
+	}
 
 	public static void main(String[] args) throws Exception {
 		props.load(new FileInputStream("config.properties"));
@@ -54,12 +73,23 @@ public class LecturaUploader {
 		String subject = null;
 		String[] recipients = props.getProperty("email-recipients").split("\\s*,\\s*");
 		try {
+			loadCrawlers();
 			if (loadPortals()) {
 				int size = portals.size();
 				if (size > 0) {
+					
 					for (int i = 0; i < size; i++) {
-						System.out.println("Portal: " + portals.get(i));
-						transferDataForPortal((Integer) portals.get(i));
+						boolean upload = 
+								(crawlers.containsKey((Integer) portals.get(i))) &&
+								crawlers.get((Integer) portals.get(i)).upload.equals("1") &&
+								crawlers.get((Integer) portals.get(i)).status.equals("1");
+						
+						if (upload) {
+							System.out.println("Portal: " + portals.get(i));
+							transferDataForPortal((Integer) portals.get(i));
+						} else {
+							System.out.println("Skipping portal: " + portals.get(i));
+						}
 						
 						recordsToTransferCP = 0;
 						recordsTransferedCP = 0;
@@ -259,5 +289,27 @@ public class LecturaUploader {
 	
 	public static Properties getProperties() {
 		return props;
+	}
+	
+	private static void loadCrawlers() throws Exception {
+		//read the XML configuration file
+		File crawlerFile = new File(props.getProperty("crawler-config"));
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse(crawlerFile);
+		doc.getDocumentElement().normalize();
+		
+		XPath xPath =  XPathFactory.newInstance().newXPath();
+		NodeList _crawlers = (NodeList) xPath.compile("/crawler-config/crawler").evaluate(doc, XPathConstants.NODESET);
+		
+		int size = _crawlers.getLength();
+		for (int i = 0; i < size; i++) {
+			Element c = (Element) _crawlers.item(i);
+			Integer id = Integer.parseInt(c.getAttribute("id"));
+			Crawler crawler = new Crawler();
+			crawler.status = c.getAttribute("status");
+			crawler.upload = c.getAttribute("upload");
+			crawlers.put(id, crawler);
+		}
 	}
 }
