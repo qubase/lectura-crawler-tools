@@ -187,7 +187,7 @@ public class LecturaCrawlerStatistics {
 						? offStyle 
 						: (alarm)
 							? alarmStyle
-							: (upload.equals("1"))
+							: (upload.equals("0"))
 								? uploadOffStyle
 								: defaultStyle;
 				
@@ -195,7 +195,7 @@ public class LecturaCrawlerStatistics {
 						? imgOFF 
 						: (alarm)
 							? imgFuckedUp
-							: (upload.equals("1"))
+							: (upload.equals("0"))
 								? imgUploadOFF
 								: imgOK;
 				
