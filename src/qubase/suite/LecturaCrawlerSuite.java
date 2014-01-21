@@ -59,7 +59,8 @@ public class LecturaCrawlerSuite {
         server.start();
 		
 //		Bauportal b = new Bauportal();
-//		b.testListing(new URL("http://www.bau-portal.com/details/Komplettraeder/ARS-Raederbau-Pflegeraeder-Case-IHC/2016627/"));
+//		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Erdbaumaschinen--Baumaschinen/28/b-Baggerlader/207/"));
+//		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Ersatzteile-fuer-Maschinen-und-Fahrzeuge/38/netgross/1/page/2/sort/DESC/sortby/date/"));
 //		System.exit(0);
 	}	
 	

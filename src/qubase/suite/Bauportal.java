@@ -44,7 +44,7 @@ public class Bauportal extends Crawler {
 	@Override
 	protected void parseList(String input) {
 		String[] lines = input.split("\\r?\\n");
-		String aRegexp = "^.*<a href=\"/(details/[^/]+/[^/]+/[^/]+/)\" class=\"link_offers_element\".*?>.*$";
+		String aRegexp = "^.*<a href=\"/(details/[^/]+/[^/]+/[^/]+/)\"\\s*class=\"link_offers_element\".*?>.*$";
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
 			String nextRegex = "^.*<div\\s*class=\"paginatorPosition\">[0-9]+\\s*-\\s*<span\\s*id=\"paginatorEndPosition\">([0-9]+)</span>\\s*von\\s*([0-9]+)</div>.*$";

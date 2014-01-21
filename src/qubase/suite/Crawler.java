@@ -398,6 +398,14 @@ abstract public class Crawler {
 		loadPage(url, listingParser);
 	}
 	
+	public void testList(URL url) {
+		loadPage(url, listParser);
+	}
+	
+	public void testSiteMap(URL url) {
+		loadPage(url, siteMapParser);
+	}
+	
 	public void setStatus(Status status) {
 		this.status = status;
 	}
