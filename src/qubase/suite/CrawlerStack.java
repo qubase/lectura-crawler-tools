@@ -93,7 +93,7 @@ public class CrawlerStack {
 		int size = blacklist.getLength();
 		for (int i = 0; i < size; i++) {
 			Element url = (Element) blacklist.item(i);
-			crawler.addToBlacklist(new URL(url.getTextContent()));
+			crawler.addToBlacklist(new URL(url.getTextContent().trim()));
 		}
 	}
 }
