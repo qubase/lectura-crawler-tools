@@ -58,9 +58,8 @@ public class LecturaCrawlerSuite {
         server.setExecutor(null); // creates a default executor
         server.start();
 		
-//		Bauportal b = new Bauportal();
-//		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Erdbaumaschinen--Baumaschinen/28/b-Baggerlader/207/"));
-//		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Ersatzteile-fuer-Maschinen-und-Fahrzeuge/38/netgross/1/page/2/sort/DESC/sortby/date/"));
+//		Forklift b = new Forklift();
+//		b.testList(new URL("http://www.forklift.de/de/endkunde/staplersuche3.php?bhvon=0&hhvon=0&fhvon=0&bhbis=9000&hhbis=30000&fhbis=4000&baujahr=0&bjbis=2014&hatbild=0&tkvon=0&tkbis=100000&preisvon=0&preisbis=1000000&antriebsart=*&plz=&entfernung=0&Bauart=2,0&reifen=*&Fabrikat=alle&masttypid=alle&landid=*&sonderbit=0&sortorder=2"));
 //		System.exit(0);
 	}	
 	
