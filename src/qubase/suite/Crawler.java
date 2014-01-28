@@ -2,6 +2,8 @@ package qubase.suite;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.logging.ConsoleHandler;
@@ -263,7 +265,6 @@ abstract public class Crawler {
 		
         try {
             HttpEntity entity = response.getEntity();
-
             //if the status code is not OK, report a problem
             if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
             	Header[] headers = response.getAllHeaders();
@@ -277,7 +278,21 @@ abstract public class Crawler {
             }
             
             if (entity != null) {
-                parser.parse(EntityUtils.toString(entity));
+            	Header[] headers = response.getHeaders("Content-Type");
+            	Charset charset = Charset.forName("UTF-8");
+            	String regexCharset = ".*?charset=(.*)$";
+            	for (Header header : headers) {
+            		String val = header.getValue();
+            		if (val.matches(regexCharset)) {
+            			try {
+            				charset = Charset.forName(val.replaceAll(regexCharset, "$1"));
+            				break;
+            			} catch (IllegalCharsetNameException e) {
+            				//ignore, it is already set to utf-8
+            			}
+            		}
+            	}
+                parser.parse(EntityUtils.toString(entity, charset));
             }
             
         } catch (Exception e) {

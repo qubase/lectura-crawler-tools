@@ -15,6 +15,7 @@ public class Listing {
 	private String zip = null;
 	private String date = null;
 	private String url = null;
+	private String newMachine = null;
 	
 	private boolean isDuplicate = false;
 	
@@ -108,6 +109,12 @@ public class Listing {
 	public void setDuplicate(boolean isDuplicate) {
 		this.isDuplicate = isDuplicate;
 	}
+	public String getNewMachine() {
+		return newMachine;
+	}
+	public void setNewMachine(String newMachine) {
+		this.newMachine = newMachine;
+	}
 	
 	public String toString() {
 		String s = LecturaCrawlerSuite.getProperties().getProperty("separator");
@@ -125,7 +132,8 @@ public class Listing {
 			"region=" + normalizeForOutput(region) + s +
 			"zip=" + normalizeForOutput(zip) + s +
 			"date=" + normalizeForOutput(date) + s +
-			"url=" + normalizeForOutput(url);
+			"url=" + normalizeForOutput(url) + s +
+			"new=" + normalizeForOutput(newMachine);
 	}
 	
 	private String normalizeForOutput(String in) {

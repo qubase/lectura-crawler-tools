@@ -201,6 +201,10 @@ public class Forklift extends Crawler {
 				inTheMainDiv = true;
 			}
 			
+			if (inTheMainDiv && line.matches("<div\\s*class=\"newMachine\\s*NMdetailView\">NEU</div>.*$")) {
+				currentListing.setNewMachine("1");
+			}
+			
 			if (inTheMainDiv && potentialBrand == null && line.matches(regexPotentialBrand)) {
 				potentialBrand = line.replaceAll(regexPotentialBrand, "$1");
 			}
@@ -222,6 +226,9 @@ public class Forklift extends Crawler {
 				if (lines.length > i) {
 					line = lines[i].trim();
 					currentListing.setYear(line.replaceAll("<span\\s*class=\"value\">([0-9]+)</span>", "$1"));
+					if (currentListing.getYear().equals("0")) {
+						currentListing.setYear(null);
+					}
 				}
 			}
 			
@@ -297,7 +304,7 @@ public class Forklift extends Crawler {
 		}
 		
 		if (brand == null) {
-			brand = potentialBrand;
+			brand = potentialBrand.trim();
 		}
 		
 		if (category == null) {
@@ -305,8 +312,8 @@ public class Forklift extends Crawler {
 		}
 		
 		if (model == null) {
-			if (potentialModel != null) {
-				model = potentialModel.replaceFirst(brand, "").trim();
+			if (potentialModel != null && brand != null) {
+				model = potentialModel.substring(potentialModel.indexOf(brand) + brand.length()).trim();
 			}
 		}
 		
