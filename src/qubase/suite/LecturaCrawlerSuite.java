@@ -58,8 +58,8 @@ public class LecturaCrawlerSuite {
         server.setExecutor(null); // creates a default executor
         server.start();
 		
-//		Forklift b = new Forklift();
-//		b.testList(new URL("http://www.forklift.de/de/endkunde/staplersuche3.php?bhvon=0&hhvon=0&fhvon=0&bhbis=9000&hhbis=30000&fhbis=4000&baujahr=0&bjbis=2014&hatbild=0&tkvon=0&tkbis=100000&preisvon=0&preisbis=1000000&antriebsart=*&plz=&entfernung=0&Bauart=2,0&reifen=*&Fabrikat=alle&masttypid=alle&landid=*&sonderbit=0&sortorder=2"));
+//		Bauportal b = new Bauportal();
+//		b.testListing(new URL("http://www.bau-portal.com/details/Hochloeffelbagger/Liebherr-R-964C-SHD-LI-1009-23168/1958883/"));
 //		System.exit(0);
 	}	
 	
