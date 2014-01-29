@@ -141,7 +141,7 @@ public class Crawler {
     		String value = null;
     		try {
     			key = crumbs[i].substring(0, crumbs[i].indexOf("="));
-    			value = crumbs[i].substring(key.length() + 1);
+    			value = crumbs[i].substring(key.length() + 1).trim();
     		} catch (Exception e) {
     			throw new Exception("[" + id + "] Cannot parse response line: " + line);
     		}
