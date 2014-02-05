@@ -42,6 +42,11 @@ public class Crawler {
 		int successfulRequestCount = 0;
 		int requestCount = 0;
 		int duplicateCount = 0;
+		
+		if (maxDuplicates < weight) {
+			maxDuplicates = weight;
+		}
+		
 		//the loop will iterate until one of the tuple requestCount and duplicateCount reaches its limit
 		//this approach will ensure a quicker processing of a duplicate sequence on the portal and a better utilization of hardware resources if set properly
 		//the maxDuplicates' recommended setting is: weight * [number of listings per list page on the portal].
