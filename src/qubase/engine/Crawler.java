@@ -69,6 +69,9 @@ public class Crawler {
 					} catch (Exception e) {
 						logger.severe("[" + id + "] Failed to save record: " + e.getMessage());
 					}
+				} else {
+					//record is duplicate and crawler didn't report it, log a warning
+					logger.warning("[" + id + "] Unreported duplicate: " + record.toString());
 				}
 			}
 			
