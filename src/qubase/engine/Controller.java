@@ -141,7 +141,9 @@ public class Controller {
 								}
 							}
 						}
-						
+					
+					} else if (crawlerPropertyName.equals("max-duplicates")) {
+						crawler.setMaxDuplicates(Integer.parseInt(crawlerProperty.getTextContent()));
 					} else if (crawlerPropertyName.equals("sleep")) {
 						crawler.setSleep(Long.parseLong(crawlerProperty.getTextContent()));
 					} else if (crawlerPropertyName.equals("url")) {

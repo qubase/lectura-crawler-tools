@@ -16,6 +16,7 @@ public class Crawler {
 	private int random = 0;
 	private long sleep = 0;
 	private int weight = 0;
+	private int maxDuplicates = 0;
 	private URL url = null;
 	private int ttl = 0;
 	
@@ -40,9 +41,13 @@ public class Crawler {
 		logger.info("[" + id + "] Starting request loop for crawler: " + name + " [request count: " + maxRequestCount + "]");
 		int successfulRequestCount = 0;
 		int requestCount = 0;
-		while (requestCount < maxRequestCount) {
-			requestCount++;
-
+		int duplicateCount = 0;
+		//the loop will iterate until one of the tuple requestCount and duplicateCount reaches its limit
+		//this approach will ensure a quicker processing of a duplicate sequence on the portal and a better utilization of hardware resources if set properly
+		//the maxDuplicates' recommended setting is: weight * [number of listings per list page on the portal].
+		//so if portal shows e.g. 25 listings per page in the list and the weight = 5, maxDuplicates should be 5 * 25 = 125, 
+		//this will ensure a acceptable number of inevitable requests to retrieve list per one secondary loop
+		while (requestCount < maxRequestCount && duplicateCount < maxDuplicates) {
 			Record record = null;
 			try {
 				record = requestRecord(separator);
@@ -61,6 +66,10 @@ public class Crawler {
 					record.setDuplicate(true);
 				}
 				
+				//the crawler did a request and didn't recognize the duplicate even if the engine has recognized it above by calling Record.exists()
+				//we want to limit real requests to the portals, so increment the requestCount even if this is a duplicate, because the crawler did it in fact
+				requestCount++;
+				
 				if (!record.isDuplicate()) {
 					try {
 						record.save();
@@ -72,6 +81,14 @@ public class Crawler {
 				} else {
 					//record is duplicate and crawler didn't report it, log a warning
 					logger.warning("[" + id + "] Unreported duplicate: " + record.toString());
+				}
+			} else {
+				if (record != null) {
+					//so it's a duplicate, because the record wasn't null and the algorithm end up here
+					duplicateCount++;
+				} else {
+					//record was null, assume a request to the portal
+					requestCount++;
 				}
 			}
 			
@@ -267,5 +284,13 @@ public class Crawler {
 	
 	public void addError(String error) {
 		errors.add(error);
+	}
+
+	public int getMaxDuplicates() {
+		return maxDuplicates;
+	}
+
+	public void setMaxDuplicates(int maxDuplicates) {
+		this.maxDuplicates = maxDuplicates;
 	}
 }
