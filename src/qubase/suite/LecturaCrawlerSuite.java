@@ -61,7 +61,7 @@ public class LecturaCrawlerSuite {
 //		Bauportal b = new Bauportal();
 //		b.testListing(new URL("http://www.bau-portal.com/details/Hochloeffelbagger/Liebherr-R-964C-SHD-LI-1009-23168/1958883/"));
 //		System.exit(0);
-	}	
+	}
 	
 	public static void init() throws Exception {
 		props.load(new FileInputStream("config.properties"));

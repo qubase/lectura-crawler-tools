@@ -114,10 +114,10 @@ abstract public class Crawler {
 					int size = status.siteMap.size();
 					logger.info("Sitemap loaded successfuly: " + size + " items");
 					
-					for (int i = 0; i < size; i++) {
-						SiteMapLocation sml = status.siteMap.get(i);
-						logger.finest("Sitemap item #" + i + " : [" + sml.name + "] " + sml.url);
-					}
+//					for (int i = 0; i < size; i++) {
+//						SiteMapLocation sml = status.siteMap.get(i);
+//						logger.finest("Sitemap item #" + i + " : [" + sml.name + "] " + sml.url);
+//					}
 				}
 				
 			} catch (Exception e) {
