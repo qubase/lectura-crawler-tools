@@ -76,7 +76,7 @@ public class Forkliftaction extends Crawler {
 			if (line.matches(aRegexp)) {
 				String link = baseUrl + line.replaceAll(aRegexp, "$1");
 				try {
-					list.add(new URL(link));
+					status.list.add(new URL(link));
 				} catch (MalformedURLException e) {
 					logger.severe("Failed to add URL to the list: [" + link + "] " + e.getMessage());
 				}
@@ -88,7 +88,7 @@ public class Forkliftaction extends Crawler {
 		currentListing = new Listing();
 		
 		try {
-			currentListing.setUrl(list.get(status.pagePosition).toString());
+			currentListing.setUrl(status.list.get(status.pagePosition).toString());
 			currentListing.setCategory(status.siteMap.get(status.siteMapIndex).name);
 			currentListing.setCatLang("EN");
 		} catch (Exception e) {

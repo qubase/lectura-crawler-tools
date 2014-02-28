@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
@@ -18,6 +19,7 @@ public class Status implements Serializable {
 	public boolean init = false;
 	public boolean nextPageAvailable = false;
 	public ArrayList<SiteMapLocation> siteMap = new ArrayList<SiteMapLocation>();
+	public ArrayList<URL> list = new ArrayList<URL>();
 	private transient Logger logger = Logger.getLogger(Status.class.getName());
 	
 	public Status reset() {
@@ -26,6 +28,7 @@ public class Status implements Serializable {
 		page = 1;
 		pagePosition = 0;
 		siteMap.clear();
+		list.clear();
 		return this;
 	}
 	
@@ -62,6 +65,7 @@ public class Status implements Serializable {
 			init = storedStatus.init;
 			nextPageAvailable = storedStatus.nextPageAvailable;
 			siteMap = storedStatus.siteMap;
+			list = storedStatus.list;
 			
 			logger.info("Status loaded with coordinates: [" + siteMapIndex + ", " + page + ", " + pagePosition + "]");
 			

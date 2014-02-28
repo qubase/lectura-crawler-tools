@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
@@ -29,7 +28,6 @@ abstract public class Crawler {
 	protected URL siteMapUrl;
 	protected String statusFile;
 	
-	protected ArrayList<URL> list = new ArrayList<URL>();
 	protected HashSet<URL> blacklist = new HashSet<URL>();
 	protected Status status = new Status();
 	
@@ -114,10 +112,10 @@ abstract public class Crawler {
 					int size = status.siteMap.size();
 					logger.info("Sitemap loaded successfuly: " + size + " items");
 					
-//					for (int i = 0; i < size; i++) {
-//						SiteMapLocation sml = status.siteMap.get(i);
-//						logger.finest("Sitemap item #" + i + " : [" + sml.name + "] " + sml.url);
-//					}
+					for (int i = 0; i < size; i++) {
+						SiteMapLocation sml = status.siteMap.get(i);
+						logger.finest("Sitemap item #" + i + " : [" + sml.name + "] " + sml.url);
+					}
 				}
 				
 			} catch (Exception e) {
@@ -128,7 +126,7 @@ abstract public class Crawler {
 		}
 		
 		//load the list if needed
-		if (list.isEmpty() && !status.siteMap.isEmpty()) {
+		if (status.list.isEmpty() && !status.siteMap.isEmpty()) {
 			try {
 				String coordinates = "[" + status.siteMapIndex + ", " + status.page + ", " + status.pagePosition + "]";
 				URL listUrl = modifyUrl(status.siteMap.get(status.siteMapIndex).url);
@@ -137,7 +135,7 @@ abstract public class Crawler {
 				
 				//if after loading the page list is still empty even after second attempt, we should probably try next category, we are out of range of the pager 
 				//this can happen when loading an older status and the page structure changed in the meantime
-				if (list.isEmpty()) {
+				if (status.list.isEmpty()) {
 					response = "Failed to load list - Empty: " + listUrl + " " + coordinates;
 					logger.warning(response);
 					if (firstEmptyList) {
@@ -160,15 +158,15 @@ abstract public class Crawler {
 		}
 		
 		//load the listing
-		if (!list.isEmpty()) {
+		if (!status.list.isEmpty()) {
 			boolean isError = false;
 			try {
 				String coordinates = "[" + status.siteMapIndex + ", " + status.page + ", " + status.pagePosition + "]";
-				URL listingUrl = list.get(status.pagePosition);
+				URL listingUrl = status.list.get(status.pagePosition);
 				logger.finest("Loading listing: " + listingUrl + " " + coordinates);
 				loadPage(listingUrl, listingParser);
 				if (currentListing == null) {
-					response = "Listing null: " + list.get(status.pagePosition);
+					response = "Listing null: " + status.list.get(status.pagePosition);
 					logger.severe(response);
 					isError = true;
 				} else {
@@ -176,17 +174,17 @@ abstract public class Crawler {
 					response = currentListing.toString();
 				}
 			} catch (Exception e) {
-				response = "Failed to load the listing: " + list.get(status.pagePosition);
+				response = "Failed to load the listing: " + status.list.get(status.pagePosition);
 				logger.severe(response);
 				isError = true;
 			} finally {
-				if (status.pagePosition == list.size() - 1) {
+				if (status.pagePosition == status.list.size() - 1) {
 					if (status.nextPageAvailable) {
 						status.nextPage().save(statusFile);
-						list.clear();
+						status.list.clear();
 					} else {
 						status.nextCategory().save(statusFile);
-						list.clear();
+						status.list.clear();
 						if (status.siteMap.size() == status.siteMapIndex) {
 							status.reset().save(statusFile);
 						}
@@ -205,7 +203,7 @@ abstract public class Crawler {
 	}
 	
 	protected void loadPage(URL url, Parser parser) {
-		
+		//toto je prasarna jak kreten
 		StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
 		//if testListing called this, perform no check
 		if (!stackTraceElements[2].getMethodName().equals("testListing")) {
@@ -259,7 +257,7 @@ abstract public class Crawler {
 				logger.severe("Failed to retrieve response: " + e.getMessage());
 			}
 			
-			responseOk = (response != null && response.getStatusLine().getStatusCode() == 200);
+			responseOk = (response != null && response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
 			attempts++;
 		}
 		
@@ -296,7 +294,7 @@ abstract public class Crawler {
             }
             
         } catch (Exception e) {
-        	logger.severe("Failed to load page: [" + url.toString() + "] " + e.getMessage());
+        	logger.severe("Failed to load page: [" + url + "] " + e.getMessage());
         } finally {
         	try {
         		//this will consume the entity and release the resources automatically, e.g. connection

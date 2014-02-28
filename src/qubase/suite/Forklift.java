@@ -157,7 +157,7 @@ public class Forklift extends Crawler {
 				
 				String link = baseUrl + infix + line.replaceAll(aRegexp, "$1$2");
 				try {
-					list.add(new URL(link));
+					status.list.add(new URL(link));
 				} catch (MalformedURLException e) {
 					logger.severe("Failed to add URL to the list: [" + link + "] " + e.getMessage());
 				}
@@ -170,7 +170,7 @@ public class Forklift extends Crawler {
 		currentListing = new Listing();
 		
 		try {
-			currentListing.setUrl(list.get(status.pagePosition).toString());
+			currentListing.setUrl(status.list.get(status.pagePosition).toString());
 		} catch (Exception e) {
 			//ignore, this is a test call
 		}

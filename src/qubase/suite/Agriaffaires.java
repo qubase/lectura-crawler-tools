@@ -119,7 +119,7 @@ public class Agriaffaires extends Crawler {
 		        
 		        while (matcher.find()) {
 		        	try {
-						list.add(new URL(siteMapUrl + matcher.group(1)));
+						status.list.add(new URL(siteMapUrl + matcher.group(1)));
 					} catch (MalformedURLException e) {
 						logger.severe("Failed to parse URL: " + siteMapUrl + matcher.group(1));
 					}
@@ -134,7 +134,7 @@ public class Agriaffaires extends Crawler {
 		
 		String url = null;
 		try {
-			url = list.get(status.pagePosition).toString();
+			url = status.list.get(status.pagePosition).toString();
 			currentListing.setUrl(url);
 		} catch (Exception e) {
 			//ignore, this is a test call
