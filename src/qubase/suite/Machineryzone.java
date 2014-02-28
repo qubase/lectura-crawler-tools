@@ -33,9 +33,6 @@ public class Machineryzone extends Crawler {
 
 	@Override
 	protected void parseSiteMap(String input) {
-		//TODO parse this one instead of the recursive solution
-		//http://www.machineryzone.eu/rubriques.asp?action=consulter
-		
 		String[] lines = input.split("\\r?\\n");
 		
 		for (String lineIn : lines) {
@@ -121,7 +118,7 @@ public class Machineryzone extends Crawler {
 		        
 		        while (matcher.find()) {
 		        	try {
-						list.add(new URL(siteMapUrl + matcher.group(1)));
+		        		status.list.add(new URL(siteMapUrl + matcher.group(1)));
 					} catch (MalformedURLException e) {
 						logger.severe("Failed to parse URL: " + siteMapUrl + matcher.group(1));
 					}
@@ -136,7 +133,7 @@ public class Machineryzone extends Crawler {
 		
 		String url = null;
 		try {
-			url = list.get(status.pagePosition).toString();
+			url = status.list.get(status.pagePosition).toString();
 			currentListing.setUrl(url);
 		} catch (Exception e) {
 			//ignore, this is a test call
@@ -152,8 +149,7 @@ public class Machineryzone extends Crawler {
 		String regexModel = "^.*?<b>Model</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse model name
 		String regexYear = "^.*?<b>Year</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9]+)</td>.*$"; //parse year of manufacture
 		String regexHours = "^.*?<b>Hours</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
-		//TODO parse mileage, check if km can be retrieved or if there is a mix of km and mile units.
-		String regexMileage = "^.*?<b>Mileage</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) mi</td>.*$"; //parse mileage
+		String regexMileage = "^.*?<b>Mileage</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) (mi|km)</td>.*$"; //parse mileage
 		String regexSerial = "^.*?<b>Serial&nbsp;number</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse serial nr.
 		String regexPrice = "^.*?<b>Price\\s*excl\\.\\s*VAT</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\., &nbsp;]+).*$"; //parse price
 		String regexCurrency = "^.*?<option\\s*value=[A-Z]{3}\\s*selected\\s*>([A-Z]{3})</option>.*$"; //parse currency
@@ -210,6 +206,19 @@ public class Machineryzone extends Crawler {
 				if (!isNotAvailableValue(val)) {
 					currentListing.setCountry(val);
 				}
+			}
+			
+			//this will never be N/A due to the regex
+			if (line.matches(regexMileage)) {
+				String counter = line.replaceAll(regexMileage, "$1");
+				String unit = line.replaceAll(regexMileage, "$2");
+				
+				if (unit.equals("mi")) {
+					//convert miles to km
+					counter = new Integer(Math.round((int) (Integer.parseInt(counter) * 1.60934))).toString();
+				}
+				
+				currentListing.setCounter(counter);
 			}
 			
 			if (line.matches(regexDate)) {
