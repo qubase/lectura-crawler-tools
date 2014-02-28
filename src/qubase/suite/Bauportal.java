@@ -31,10 +31,14 @@ public class Bauportal extends Crawler {
 		        Matcher  matcher = pattern.matcher(line);
 		        
 		        while (matcher.find()) {
+		        	URL link = null;
 		        	try {
-						addToSiteMap(new SiteMapLocation(new URL(siteMapUrl + matcher.group(1)), matcher.group(2)));
-					} catch (MalformedURLException e) {
-						logger.severe("Failed to parse URL: " + siteMapUrl + matcher.group(1));
+			        	link = new URL(siteMapUrl + matcher.group(1));
+			        	if (!blacklist.contains(link)) {
+							addToSiteMap(new SiteMapLocation(link, matcher.group(2)));
+			        	}
+		        	} catch (MalformedURLException e) {
+						logger.severe("Failed to parse URL: " + link);
 					}
 		        }
 			}
@@ -56,8 +60,8 @@ public class Bauportal extends Crawler {
 				String link = siteMapUrl.toString() + line.replaceAll(aRegexp, "$1");
 				try {
 					URL url = new URL(link);
-					if (!list.contains(url)) {
-						list.add(url);
+					if (!status.list.contains(url)) {
+						status.list.add(url);
 					}
 				} catch (MalformedURLException e) {
 					logger.severe("Failed to add URL to the list: [" + link + "] " + e.getMessage());
@@ -71,7 +75,7 @@ public class Bauportal extends Crawler {
 		currentListing = new Listing();
 		
 		try {
-			currentListing.setUrl(list.get(status.pagePosition).toString());
+			currentListing.setUrl(status.list.get(status.pagePosition).toString());
 		} catch (Exception e) {
 			//ignore, this is a test call
 		}
