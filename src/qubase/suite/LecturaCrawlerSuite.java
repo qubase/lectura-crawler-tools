@@ -58,8 +58,9 @@ public class LecturaCrawlerSuite {
         server.setExecutor(null); // creates a default executor
         server.start();
 		
-//		Bauportal b = new Bauportal();
-//		b.testListing(new URL("http://www.bau-portal.com/details/Hochloeffelbagger/Liebherr-R-964C-SHD-LI-1009-23168/1958883/"));
+//		Machineryzone b = new Machineryzone();
+//		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
+//		b.testListing(new URL("http://www.machineryzone.eu/used/tractors-unit/4362157/volvo-fh500-xl--eev.html"));
 //		System.exit(0);
 	}
 	
