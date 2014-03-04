@@ -45,6 +45,20 @@ public class LecturaCrawlerStatistics {
 		public String upload = null;
 	}
 	
+	private static class Total {
+		public int listingsAllTime = 0;
+		public int listings24hrs = 0;
+		public int price = 0;
+		public int curr = 0;
+		public int year = 0;
+		public int counter = 0;
+		public int category = 0;
+		public int serial = 0;
+		public int country = 0;
+		public int region = 0;
+		public int zip = 0;
+	}
+	
 	public static void main(String[] args) {
 		String emailBody = null;
 		try {
@@ -134,7 +148,7 @@ public class LecturaCrawlerStatistics {
 		while (cursor.hasNext()) {
 			BasicDBObject doc = (BasicDBObject) cursor.next();
 			Date reportTimestamp = doc.getDate("date");
-			
+			Total total = new Total();
 			if (!reportTimestamp.equals(currDate)) {
 				if (first) {
 					first = false;
@@ -206,27 +220,35 @@ public class LecturaCrawlerStatistics {
 				tableRow += "<td " + cellStyle + "><b>" + name + "</b></td>";
 				tableRow += "<td " + cellStyle + ">" + ((status.equals("1")) ? "ON" : "OFF") + "</td>";
 				tableRow += "<td " + cellStyle + ">" + report.getInt("listingsAllTime") + "</td>";
+				total.listingsAllTime += report.getInt("listingsAllTime");
 				
 				String thisCellStyle = (report.getInt("listings") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + "><b>" + report.getInt("listings") + "</b></td>";
+				total.listings24hrs += report.getInt("listings");
 				
 				thisCellStyle = (report.getInt("price") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("price") + "</td>";
+				total.price += report.getInt("price");
 				
 				thisCellStyle = (report.getInt("currency") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("currency") + "</td>";
+				total.curr += report.getInt("currency");
 				
 				thisCellStyle = (report.getInt("year") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("year") + "</td>";
+				total.year += report.getInt("year");
 				
 				thisCellStyle = (report.getInt("counter") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("counter") + "</td>";
+				total.counter += report.getInt("counter");
 				
 				thisCellStyle = (report.getInt("category") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("category") + "</td>";
+				total.category += report.getInt("category");
 				
 				thisCellStyle = (report.getInt("serial") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("serial") + "</td>";
+				total.serial += report.getInt("serial");
 				
 				boolean tooFewCountriesCollected = false;
 				if (report.getInt("listings") != 0) {
@@ -234,16 +256,39 @@ public class LecturaCrawlerStatistics {
 				}
 				thisCellStyle = (report.getInt("country") == 0 || tooFewCountriesCollected) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("country") + "</td>";
+				total.country += report.getInt("country");
 				
 				thisCellStyle = (report.getInt("region") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("region") + "</td>";
+				total.region += report.getInt("region");
 				
 				thisCellStyle = (report.getInt("zip") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("zip") + "</td>";
+				total.zip += report.getInt("zip");
 				tableRow += "</tr>\n";
 				
 				text += tableRow;
 			}
+			
+			String tableTotal = "<tr>";
+			tableTotal += "<td " + headStyle + " width=\"24\">&nbsp;</td>";
+			tableTotal += "<td " + headStyle + ">&nbsp;</td>";
+			tableTotal += "<td " + headStyle + "><b>TOTAL</b></td>";
+			tableTotal += "<td " + headStyle + ">&nbsp;</td>";
+			tableTotal += "<td " + headStyle + ">" + total.listingsAllTime + "</td>";
+			tableTotal += "<td " + headStyle + "><b>" + total.listings24hrs + "</b></td>";
+			tableTotal += "<td " + headStyle + ">" + total.price + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.curr + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.year + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.counter + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.category + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.serial + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.country + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.region + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.zip + "</td>";
+			tableTotal += "</tr>\n";
+			
+			text += tableTotal;
 		}
 		
 		text += tableTail;
