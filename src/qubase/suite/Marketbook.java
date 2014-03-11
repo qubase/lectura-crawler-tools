@@ -16,7 +16,6 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.http.HttpStatus;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
@@ -24,7 +23,7 @@ import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.util.NameValuePair;
 
-//marketbook parser works in a different way, it saves all the refernces
+// marketbook parser works in a different way, it saves all the refernces
 // to listing details already in the first step when parsing the sitemap
 // so there is only one sitemap entry and a single huge list saved into the status
 public class Marketbook extends Crawler {
