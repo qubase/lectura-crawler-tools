@@ -178,7 +178,7 @@ public class Marketbook extends Crawler {
 					currentListing.setCounter(value);
 				}
 				
-				if (key.equals("Zustand des Produktes")) {
+				if (key.equals("Zustand des Produkts")) {
 					currentListing.setNewMachine(value);
 				}
 			}
