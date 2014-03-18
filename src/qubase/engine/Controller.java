@@ -90,6 +90,13 @@ public class Controller {
 			NodeList crawlerProperties = crawlerNode.getChildNodes();
 			
 			Crawler crawler = new Crawler();
+			
+			try {
+				crawler.setErrorLimit(Integer.parseInt(props.getProperty("error-limit")));
+			} catch (NumberFormatException e) {
+				logger.warning("Failed to set error limit.");
+			}
+			
 			if (crawlerNode.getNodeType() == Node.ELEMENT_NODE) {
 				Element crawlerElement = (Element) crawlerNode;
 				

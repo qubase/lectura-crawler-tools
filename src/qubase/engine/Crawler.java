@@ -117,7 +117,7 @@ public class Crawler {
 		record.setTtl(ttl);
 		record.addProperty("portalId", new Integer(id).toString());
 		
-        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), "UTF8"));
+        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));
         String line;
         boolean readOne = false;
         while ((line = in.readLine()) != null) {
