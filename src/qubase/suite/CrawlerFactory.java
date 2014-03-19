@@ -14,6 +14,8 @@ public class CrawlerFactory {
 			return new Forklift();
 		} else if (portalName.equals("marketbook")) {
 			return new Marketbook();
+		} else if (portalName.equals("landwirt")) {
+			return new Landwirt();
 		} else {
 			throw new IllegalArgumentException("Invalid portal name: " + portalName);
 		}

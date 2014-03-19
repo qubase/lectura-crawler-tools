@@ -58,9 +58,9 @@ public class LecturaCrawlerSuite {
         server.setExecutor(null); // creates a default executor
         server.start();
 		
-//		Machineryzone b = new Machineryzone();
+//		Landwirt b = new Landwirt();
 //		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
-//		b.testListing(new URL("http://www.machineryzone.eu/used/tractors-unit/4362157/volvo-fh500-xl--eev.html"));
+//		b.testListing(new URL("http://www.landwirt.com/gebrauchte,1173973,Carraro-Tigrecar-84-GST-14112.html"));
 //		System.exit(0);
 	}
 	
