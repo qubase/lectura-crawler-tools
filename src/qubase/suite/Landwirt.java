@@ -3,6 +3,7 @@ package qubase.suite;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -191,8 +192,26 @@ public class Landwirt extends Crawler {
 			if (inYear) {
 				inYear = false;
 				String year = line.replaceAll("([0-9]+)</li>.*", "$1");
+				
 				if (!year.isEmpty()) {
 					currentListing.setYear(year);
+				}
+				
+				//if 99, 12, 1 or similar idiotic year, try to resolve it
+				if (year.length() < 3) {
+					if (year.length() == 1) {
+						year = "0" + year;
+					}
+					
+					try {
+						DateFormat sdfp = new SimpleDateFormat("yy");
+						Date y = sdfp.parse(year);
+						DateFormat sdff = new SimpleDateFormat("yyyy");
+						String yearNew = sdff.format(y);
+						currentListing.setYear(yearNew);
+					} catch (Exception e) {
+						//ignore, original year will be used
+					}
 				}
 			}
 			
@@ -231,6 +250,11 @@ public class Landwirt extends Crawler {
 								//ignore
 							}
 						}
+					}
+				} else {
+					if (price != null && !price.isEmpty()) {
+						currentListing.setPrice(price);
+						currentListing.setCurrency(currency);
 					}
 				}
 			}
