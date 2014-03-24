@@ -16,12 +16,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.ProtocolException;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 import com.mongodb.DB;
@@ -54,13 +60,13 @@ public class LecturaCrawlerSuite {
 		init();
 		
 		HttpServer server = HttpServer.create(new InetSocketAddress(Integer.parseInt(props.getProperty("port"))), 0);
-        server.createContext("/suite", new EngineRequestHandler());
-        server.setExecutor(null); // creates a default executor
-        server.start();
+		server.createContext("/suite", new EngineRequestHandler());
+		server.setExecutor(null); // creates a default executor
+		server.start();
 		
-//		Landwirt b = new Landwirt();
+//		Bauportal b = new Bauportal();
 //		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
-//		b.testListing(new URL("http://www.landwirt.com/gebrauchte,1173973,Carraro-Tigrecar-84-GST-14112.html"));
+//		b.testListing(new URL(" http://www.bau-portal.com/details/Schachthebegeraet/Zagro-HK-6/2008345/"));
 //		System.exit(0);
 	}
 	
@@ -341,6 +347,24 @@ public class LecturaCrawlerSuite {
 				.setConnectionManager(connectionManager)
 				.setDefaultRequestConfig(defaultRequestConfig)
 				.disableAutomaticRetries()
+				.setRedirectStrategy(new DefaultRedirectStrategy() {                
+			        public boolean isRedirected(HttpRequest request, HttpResponse response, HttpContext context)  {
+			            boolean isRedirect=false;
+			            try {
+			                isRedirect = super.isRedirected(request, response, context);
+			            } catch (ProtocolException e) {
+			                // TODO Auto-generated catch block
+			                e.printStackTrace();
+			            }
+			            if (!isRedirect) {
+			                int responseCode = response.getStatusLine().getStatusCode();
+			                if (responseCode == 301 || responseCode == 302) {
+			                    return true;
+			                }
+			            }
+			            return isRedirect;
+			        }
+			    })
 				.build();
 		
 		//run the connection monitor

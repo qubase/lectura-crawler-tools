@@ -38,6 +38,7 @@ abstract public class Crawler {
 	protected int retry = 0;
 	protected long retryAfter = 0;
 	protected boolean firstEmptyList = true;
+	protected String error = "error=";
 	
 	public Crawler() {
 		logger = Logger.getLogger(this.getClass().getName());
@@ -80,7 +81,6 @@ abstract public class Crawler {
 		logger.finest("Item request initiated.");
 		
 		String response = null;
-		String error = "error=";
 		
 		if (!status.init) {
 			if (!status.load(statusFile)) {

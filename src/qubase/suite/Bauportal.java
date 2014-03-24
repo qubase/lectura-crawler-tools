@@ -19,6 +19,8 @@ public class Bauportal extends Crawler {
 			logger.severe("Failed to init siteMapUrl: [http://www.bau-portal.com/] " + e.getMessage());
 		}
 		statusFile = name + ".status";
+		//this will not be taken into consideration when reporting and stopping crawler
+		error = "errorNoReport=";
 	}
 	
 	@Override
