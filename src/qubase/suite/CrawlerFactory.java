@@ -16,6 +16,8 @@ public class CrawlerFactory {
 			return new Marketbook();
 		} else if (portalName.equals("landwirt")) {
 			return new Landwirt();
+		} else if (portalName.equals("autotrader")) {
+			return new Autotrader();
 		} else {
 			throw new IllegalArgumentException("Invalid portal name: " + portalName);
 		}
