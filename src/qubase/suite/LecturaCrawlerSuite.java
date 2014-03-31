@@ -19,7 +19,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.ProtocolException;
-import org.apache.http.protocol.HttpContext;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -27,8 +26,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.protocol.HttpContext;
 
 import com.mongodb.DB;
 import com.mongodb.MongoClient;
@@ -64,9 +63,9 @@ public class LecturaCrawlerSuite {
 		server.setExecutor(null); // creates a default executor
 		server.start();
 		
-//		Bauportal b = new Bauportal();
+//		Autotrader b = new Autotrader();
 //		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
-//		b.testListing(new URL(" http://www.bau-portal.com/details/Schachthebegeraet/Zagro-HK-6/2008345/"));
+//		b.testListing(new URL("http://farm.autotrader.co.uk/used-farm-machinery/fendt/tractors/2002-fendt-714-diesel-salisbury-ffpa-8ad10a8444b1de390144fda323cd3032"));
 //		System.exit(0);
 	}
 	

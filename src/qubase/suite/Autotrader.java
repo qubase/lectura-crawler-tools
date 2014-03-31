@@ -66,6 +66,7 @@ public class Autotrader extends Crawler {
 		String regexInAdvert = "<div\\s*class=\"advertInfo\">";
 		String regexManufacturer = "<a href=\".*?\">(.*?)</a>\\s*&gt;";
 		String regexPrice = "&pound;([,\\.0-9]+)(\\s\\+VAT)?";
+		String regexInPrice = "<div\\s*class=\"price\">";
 		
 		String manufacturer = null;
 		String category = null;
@@ -73,6 +74,7 @@ public class Autotrader extends Crawler {
 		boolean inBreadCrumbs = false;
 		boolean inInfo = false;
 		boolean nextLiIsFirst = false;
+		boolean inPrice = false;
 		
 		for (int i = 0; i < lines.length; i++) {
 			String line = lines[i].trim();
@@ -96,13 +98,22 @@ public class Autotrader extends Crawler {
 			}
 			
 			//price
-			if (line.matches(regexPrice)) {
+			if (line.matches(regexPrice) && inPrice) {
 				String price = line.replaceAll(regexPrice, "$1");
+				inPrice = false;
 				
 				if (price != null && !price.isEmpty()) {
 					currentListing.setPrice(price);
 					currentListing.setCurrency("GBP");
 				}
+			}
+			
+			if (inPrice && line.matches("</div>")) {
+				inPrice = false;
+			}
+			
+			if (line.matches(regexInPrice)) {
+				inPrice = true;
 			}
 			
 			//category + year + hrs
@@ -138,6 +149,15 @@ public class Autotrader extends Crawler {
 			
 			if (line.matches(regexInAdvert)) {
 				inInfo = true;
+			}
+			
+			//region
+			if (line.matches("<h1>.*?</h1>")) {
+				String region = line.replaceAll("<h1>.*\\sin\\s(.*?)?</h1>", "$1");
+				
+				if (region != null && !region.isEmpty()) {
+					currentListing.setRegion(region);
+				}
 			}
 		}
 		
