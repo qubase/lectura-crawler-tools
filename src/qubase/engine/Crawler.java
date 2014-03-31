@@ -9,6 +9,10 @@ import java.util.Date;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+
 public class Crawler {
 	private int id;
 	private String name = null;
@@ -42,11 +46,14 @@ public class Crawler {
 		int successfulRequestCount = 0;
 		int requestCount = 0;
 		int duplicateCount = 0;
+		int iterations = 0;
 		
 		if (maxDuplicates < weight) {
 			maxDuplicates = weight;
 		}
 		
+		
+		long start = System.currentTimeMillis();
 		//the loop will iterate until one of the tuple requestCount and duplicateCount reaches its limit
 		//this approach will ensure a quicker processing of a duplicate sequence on the portal and a better utilization of hardware resources if set properly
 		//the maxDuplicates' recommended setting is: weight * [number of listings per list page on the portal].
@@ -54,6 +61,7 @@ public class Crawler {
 		//this will ensure a acceptable number of inevitable requests to retrieve list per one secondary loop
 		while (requestCount < maxRequestCount && duplicateCount < maxDuplicates) {
 			Record record = null;
+			iterations++;
 			try {
 				record = requestRecord(separator);
 			} catch (Exception e) {
@@ -109,8 +117,40 @@ public class Crawler {
 		}
 		
 		logger.finest("[" + id + "] Request loop finished for crawler: " + name + ", [success ratio: " + successfulRequestCount + "/" + maxRequestCount + "]");
+		saveStats(id, requestCount, duplicateCount, iterations, (System.currentTimeMillis() - start) / 1000);
 	}
 	
+	private void saveStats(int portalId, int requestCount, int duplicateCount, int iterations, long seconds) {
+		DB db = LecturaCrawlerEngine.getDB();
+		DBCollection collection = db.getCollection("statistics");
+		
+		String objectId = new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "_" + portalId;
+		
+		BasicDBObject doc = (BasicDBObject) collection.findOne(new BasicDBObject("_id", objectId));
+		
+		//insert
+		if (doc == null) {
+			doc = new BasicDBObject("_id", objectId)
+			.append("portalId", portalId)
+			.append("allAttempts", iterations)
+			.append("requests", requestCount)
+			.append("duplicates", duplicateCount)
+			.append("seconds", seconds)
+			.append("date", new Date());
+			
+			collection.insert(doc);
+		} else {//update
+			BasicDBObject query = new BasicDBObject("_id", objectId);
+			BasicDBObject update = new BasicDBObject("allAttempts", iterations)
+				.append("requests", requestCount)
+				.append("duplicates", duplicateCount)
+				.append("seconds", seconds);
+			BasicDBObject newDoc = new BasicDBObject("$inc", update);
+			
+			collection.update(query, newDoc);
+		}
+	}
+
 	private Record requestRecord(String separator) throws Exception {
 		logger.fine("[" + id + "] Starting remote request.");
 		Record record = new Record();
