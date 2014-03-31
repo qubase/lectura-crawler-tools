@@ -132,6 +132,7 @@ public class Crawler {
 		if (doc == null) {
 			doc = new BasicDBObject("_id", objectId)
 			.append("portalId", portalId)
+			.append("todo", 1)
 			.append("allAttempts", iterations)
 			.append("requests", requestCount)
 			.append("duplicates", duplicateCount)
