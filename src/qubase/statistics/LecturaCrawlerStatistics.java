@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -57,6 +59,11 @@ public class LecturaCrawlerStatistics {
 		public int country = 0;
 		public int region = 0;
 		public int zip = 0;
+		public int attempts = 0;
+		public int requests = 0;
+		public int duplicates = 0;
+		public int seconds = 0;
+		public int requestSeconds = 0;
 	}
 	
 	public static void main(String[] args) {
@@ -100,6 +107,7 @@ public class LecturaCrawlerStatistics {
 		text += "<body>\n";
 		
 		String headStyle = "style=\"border-bottom: 2px solid #404040;\"";
+		String headLeftStyle = "style=\"border-bottom: 2px solid #404040; border-left: 1px dotted #808080;\"";
 		String tableHead = "<tr>";
 		tableHead += "<th " + headStyle + " width=\"24\">&nbsp;</th>";
 		tableHead += "<th " + headStyle + ">ID</th>";
@@ -116,9 +124,15 @@ public class LecturaCrawlerStatistics {
 		tableHead += "<th " + headStyle + ">Country</th>";
 		tableHead += "<th " + headStyle + ">Region</th>";
 		tableHead += "<th " + headStyle + ">Zip</th>";
+		tableHead += "<th " + headLeftStyle + ">A</th>";
+		tableHead += "<th " + headStyle + ">R</th>";
+		tableHead += "<th " + headStyle + ">D</th>";
+		tableHead += "<th " + headStyle + ">Hrs</th>";
+		tableHead += "<th " + headStyle + ">RHrs</th>";
+		tableHead += "<th " + headStyle + ">1RSec</th>";
 		tableHead += "</tr>\n";
 		
-		String colspan = "15";
+		String colspan = "21";
 		
 		String titleOK = "Seems to be OK";
 		String titleOFF = "This one's OFF";
@@ -133,7 +147,8 @@ public class LecturaCrawlerStatistics {
 				+ imgOK + "&nbsp;&nbsp;&nbsp;" + titleOK + "&nbsp;&nbsp;|&nbsp;&nbsp;"
 				+ imgOFF + "&nbsp;&nbsp;&nbsp;" + titleOFF + "&nbsp;&nbsp;|&nbsp;&nbsp;"
 				+ imgFuckedUp + "&nbsp;&nbsp;&nbsp;" + titleFuckedUp + "&nbsp;&nbsp;|&nbsp;&nbsp;"
-				+ imgUploadOFF + "&nbsp;&nbsp;&nbsp;" + titleUploadOFF
+				+ imgUploadOFF + "&nbsp;&nbsp;&nbsp;" + titleUploadOFF + "<br/>"
+				+ "<b>A</b> - All attempts&nbsp;&nbsp;|&nbsp;&nbsp;<b>R</b> - Requests&nbsp;&nbsp;|&nbsp;&nbsp;<b>D</b> - Duplicates&nbsp;&nbsp;|&nbsp;&nbsp;<b>Hrs</b> - Hours spent with this crawler&nbsp;&nbsp;|&nbsp;&nbsp;<b>RHrs</b> - Hours spent with requests&nbsp;&nbsp;|&nbsp;&nbsp;<b>1RSec</b> - Avg seconds per request"
 				+ "</td></tr>";
 		tableTail += "</table>\n";
 		
@@ -188,6 +203,8 @@ public class LecturaCrawlerStatistics {
 				String offStyle = "style=\"border-bottom: 1px solid #404040; background: #efefef; color: #a0a0a0\"";
 				String alarmStyle = "style=\"border-bottom: 1px solid #404040; background: #ffb0b0; color: #505050\"";
 				String uploadOffStyle = "style=\"border-bottom: 1px solid #404040; background: #fff5b2; color: #505050\"";
+				String statsLeftStyle = "style=\"border-bottom: 1px solid #404040; border-left: 1px solid #808080; border-right: 1px dotted #808080; background: #ffffff; color: #505050\"";
+				String statsStyle = "style=\"border-bottom: 1px solid #404040; border-right: 1px dotted #808080; background: #ffffff; color: #505050\"";
 				
 				boolean alarm = report.getInt("listings") == 0
 						|| report.getInt("price") == 0
@@ -265,7 +282,27 @@ public class LecturaCrawlerStatistics {
 				thisCellStyle = (report.getInt("zip") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("zip") + "</td>";
 				total.zip += report.getInt("zip");
+				
+				//stats
+				int attempts = (report.get("attempts") != null) ?  report.getInt("attempts") : 0;
+				int requests = (report.get("requests") != null) ?  report.getInt("requests") : 0;
+				int duplicates = (report.get("duplicates") != null) ?  report.getInt("duplicates") : 0;
+				long seconds = (report.get("seconds") != null) ?  report.getLong("seconds") : 0;
+				long requestSeconds = (report.get("requestSeconds") != null) ?  report.getLong("requestSeconds") : 0;
+				
+				tableRow += "<td " + statsLeftStyle + ">" + attempts + "</td>";
+				tableRow += "<td " + statsStyle + "><b>" + requests + "</b></td>";
+				tableRow += "<td " + statsStyle + ">" + duplicates + "</td>";
+				tableRow += "<td " + statsStyle + ">" + round(((double) seconds) / (60 * 60), 2) + "</td>";
+				tableRow += "<td " + statsStyle + ">" + round(((double) requestSeconds) / (60 * 60), 2) + "</td>";
+				tableRow += "<td " + statsStyle + ">" + ((requests > 0) ? round( (double) requestSeconds / (double) requests, 2) : "-") + "</td>";
 				tableRow += "</tr>\n";
+				
+				total.attempts += attempts;
+				total.requests += requests;
+				total.duplicates += duplicates;
+				total.seconds += seconds;
+				total.requestSeconds += requestSeconds;
 				
 				text += tableRow;
 			}
@@ -286,6 +323,12 @@ public class LecturaCrawlerStatistics {
 			tableTotal += "<td " + headStyle + ">" + total.country + "</td>";
 			tableTotal += "<td " + headStyle + ">" + total.region + "</td>";
 			tableTotal += "<td " + headStyle + ">" + total.zip + "</td>";
+			tableTotal += "<td " + headLeftStyle + ">" + total.attempts + "</td>";
+			tableTotal += "<td " + headStyle + "><b>" + total.requests + "</b></td>";
+			tableTotal += "<td " + headStyle + ">" + total.duplicates + "</td>";
+			tableTotal += "<td " + headStyle + ">" + round(((double) total.seconds) / (60 * 60), 2) + "</td>";
+			tableTotal += "<td " + headStyle + ">" + round(((double) total.requestSeconds) / (60 * 60), 2) + "</td>";
+			tableTotal += "<td " + headStyle + ">" + ((total.requests > 0) ? round( (double) total.requestSeconds / (double) total.requests, 2) : "-") + "</td>";
 			tableTotal += "</tr>\n";
 			
 			text += tableTotal;
@@ -296,6 +339,14 @@ public class LecturaCrawlerStatistics {
 		text += "</body>\n";
 		text += "</html>";
 		return text;
+	}
+	
+	private static double round(double value, int places) {
+	    if (places < 0) throw new IllegalArgumentException();
+
+	    BigDecimal bd = new BigDecimal(value);
+	    bd = bd.setScale(places, RoundingMode.HALF_UP);
+	    return bd.doubleValue();
 	}
 	
 	private static void loadCrawlers() throws Exception {
