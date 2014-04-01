@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 
 public class Crawler {
 	private int id;
@@ -47,6 +48,7 @@ public class Crawler {
 		int requestCount = 0;
 		int duplicateCount = 0;
 		int iterations = 0;
+		long requestTime = 0;
 		
 		if (maxDuplicates < weight) {
 			maxDuplicates = weight;
@@ -62,11 +64,14 @@ public class Crawler {
 		while (requestCount < maxRequestCount && duplicateCount < maxDuplicates) {
 			Record record = null;
 			iterations++;
+			
+			long s = System.currentTimeMillis();
 			try {
 				record = requestRecord(separator);
 			} catch (Exception e) {
 				logger.warning(e.getMessage());
 			}
+			requestTime += System.currentTimeMillis() - s;
 			
 			if (!isPublished) {
 				logger.severe("[" + id + "] Stopping the crawler, too many errors");
@@ -117,10 +122,10 @@ public class Crawler {
 		}
 		
 		logger.finest("[" + id + "] Request loop finished for crawler: " + name + ", [success ratio: " + successfulRequestCount + "/" + maxRequestCount + "]");
-		saveStats(id, requestCount, duplicateCount, iterations, (System.currentTimeMillis() - start) / 1000);
+		saveStats(id, requestCount, duplicateCount, iterations, (System.currentTimeMillis() - start) / 1000, requestTime / 1000);
 	}
 	
-	private void saveStats(int portalId, int requestCount, int duplicateCount, int iterations, long seconds) {
+	private void saveStats(int portalId, int requestCount, int duplicateCount, int iterations, long seconds, long requestSeconds) {
 		DB db = LecturaCrawlerEngine.getDB();
 		DBCollection collection = db.getCollection("statistics");
 		
@@ -130,13 +135,24 @@ public class Crawler {
 		
 		//insert
 		if (doc == null) {
+			DBCursor olds = collection.find(new BasicDBObject("portalId", portalId).append("todo", new BasicDBObject("$gt", 0)));
+			int todo = 0;
+			while (olds.hasNext()) {
+				BasicDBObject d = (BasicDBObject) olds.next();
+				int oldTodo = d.getInt("todo");
+				if (oldTodo >= todo) {
+					todo = oldTodo + 1;
+				}
+			}
+			
 			doc = new BasicDBObject("_id", objectId)
 			.append("portalId", portalId)
-			.append("todo", 1)
+			.append("todo", todo)
 			.append("allAttempts", iterations)
 			.append("requests", requestCount)
 			.append("duplicates", duplicateCount)
 			.append("seconds", seconds)
+			.append("requestSeconds", requestSeconds)
 			.append("date", new Date());
 			
 			collection.insert(doc);
@@ -145,7 +161,8 @@ public class Crawler {
 			BasicDBObject update = new BasicDBObject("allAttempts", iterations)
 				.append("requests", requestCount)
 				.append("duplicates", duplicateCount)
-				.append("seconds", seconds);
+				.append("seconds", seconds)
+				.append("requestSeconds", requestSeconds);
 			BasicDBObject newDoc = new BasicDBObject("$inc", update);
 			
 			collection.update(query, newDoc);
