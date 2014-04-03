@@ -281,7 +281,8 @@ public class Forklift extends Crawler {
 					line = lines[i].trim();
 					String priceCurrency = line.replaceAll("<span\\s*class=\"valueHighlight\">(.*?)</span>", "$1");
 					if (priceCurrency.matches(".*[0-9].*")) {
-						String price = priceCurrency.replaceFirst(currentListing.getCurrency(), "").trim();
+						String currency = priceCurrency.replaceAll("[^A-Z]", "");
+						String price = priceCurrency.replaceFirst(currency, "").trim();
 						if (!price.equals("1")) {
 							currentListing.setCurrency(priceCurrency.replaceAll("[^A-Z]", ""));
 							currentListing.setPrice(price);
