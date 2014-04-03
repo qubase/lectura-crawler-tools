@@ -28,6 +28,7 @@ public class Crawler {
 	private static int errorsInRow = 0;
 	private static ArrayList<String> errors = new ArrayList<String>();
 	private int errorLimit = 10;
+	private long time = 0;
 	
 	private boolean isPublished = true;
 	
@@ -65,13 +66,12 @@ public class Crawler {
 			Record record = null;
 			iterations++;
 			
-			long s = System.currentTimeMillis();
 			try {
 				record = requestRecord(separator);
 			} catch (Exception e) {
 				logger.warning(e.getMessage());
 			}
-			requestTime += System.currentTimeMillis() - s;
+			requestTime += time;
 			
 			if (!isPublished) {
 				logger.severe("[" + id + "] Stopping the crawler, too many errors");
@@ -136,7 +136,7 @@ public class Crawler {
 		//insert
 		if (doc == null) {
 			DBCursor olds = collection.find(new BasicDBObject("portalId", portalId).append("todo", new BasicDBObject("$gt", 0)));
-			int todo = 0;
+			int todo = 1;
 			while (olds.hasNext()) {
 				BasicDBObject d = (BasicDBObject) olds.next();
 				int oldTodo = d.getInt("todo");
@@ -175,7 +175,9 @@ public class Crawler {
 		record.setTtl(ttl);
 		record.addProperty("portalId", new Integer(id).toString());
 		
+		long start = System.currentTimeMillis();
         BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));
+        time = System.currentTimeMillis() - start;
         String line;
         boolean readOne = false;
         while ((line = in.readLine()) != null) {
@@ -186,6 +188,7 @@ public class Crawler {
         	if (line.equals("duplicate")) {
         		logger.finer("[" + id + "] Duplicate responded.");
         		record.setDuplicate(true);
+        		time = 0;
         		return record;
         	}
         	
