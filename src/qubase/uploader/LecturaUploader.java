@@ -1,6 +1,5 @@
 package qubase.uploader;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -11,16 +10,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import qubase.engine.Email;
 
@@ -40,6 +29,8 @@ public class LecturaUploader {
 	
 	private static int recordsTransferedCP = 0;
 	private static int recordsToTransferCP = 0;
+	private static int recordsTransferedCPTotal = 0;
+	private static int recordsToTransferCPTotal = 0;
 	
 	private static int insertLength = 0;
 	
@@ -52,6 +43,7 @@ public class LecturaUploader {
 	private static class Crawler {
 		public String status = null;
 		public String upload = null;
+		public String name = null;
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -86,7 +78,7 @@ public class LecturaUploader {
 						
 						if (upload) {
 							System.out.println("Portal: " + portals.get(i));
-							transferDataForPortal((Integer) portals.get(i));
+							transferDataForPortal((Integer) portals.get(i), crawlers.get((Integer) portals.get(i)));
 						} else {
 							System.out.println("Skipping portal: " + portals.get(i));
 						}
@@ -96,6 +88,7 @@ public class LecturaUploader {
 					}
 					
 					subject = "Lectura Uploader - Success";
+					message += "TOTAL: " + recordsToTransferCPTotal + "/" + recordsTransferedCPTotal; 
 				} else {
 					message = "No portals to process loaded.";
 					subject = "Lectura Uploader - Warning";
@@ -130,7 +123,7 @@ public class LecturaUploader {
 		return portals != null;
 	}
 
-	private static void transferDataForPortal(Integer portalId) throws Exception {
+	private static void transferDataForPortal(Integer portalId, Crawler crawler) throws Exception {
 		if (db == null) throw new Exception("MongoDB not initialized.");
 		
 		DBCollection coll = db.getCollection("listings");
@@ -188,7 +181,10 @@ public class LecturaUploader {
 			}
 		}
 		
-		message += "Success ratio: [" + portalId + "] => " + recordsTransferedCP + "/" + recordsToTransferCP + "\n";
+		recordsToTransferCPTotal += recordsToTransferCP;
+		recordsTransferedCPTotal += recordsTransferedCP;
+		
+		message += "Success ratio: [" + portalId + "] " + crawler.name + " => " + recordsTransferedCP + "/" + recordsToTransferCP + "\n";
 		
 		try {
 			insertImport(importId, portalId);
@@ -292,23 +288,15 @@ public class LecturaUploader {
 	}
 	
 	private static void loadCrawlers() throws Exception {
-		//read the XML configuration file
-		File crawlerFile = new File(props.getProperty("crawler-config"));
-		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-		Document doc = dBuilder.parse(crawlerFile);
-		doc.getDocumentElement().normalize();
+		DBCursor cursor = db.getCollection("crawler.config").find().sort(new BasicDBObject("_id", 1));
 		
-		XPath xPath =  XPathFactory.newInstance().newXPath();
-		NodeList _crawlers = (NodeList) xPath.compile("/crawler-config/crawler").evaluate(doc, XPathConstants.NODESET);
-		
-		int size = _crawlers.getLength();
-		for (int i = 0; i < size; i++) {
-			Element c = (Element) _crawlers.item(i);
-			Integer id = Integer.parseInt(c.getAttribute("id"));
+		while (cursor.hasNext()) {
+			BasicDBObject c = (BasicDBObject) cursor.next();
+			Integer id = c.getInt("_id");
 			Crawler crawler = new Crawler();
-			crawler.status = c.getAttribute("status");
-			crawler.upload = c.getAttribute("upload");
+			crawler.name = c.getString("name");
+			crawler.status = c.getString("status");
+			crawler.upload = c.getString("upload");
 			crawlers.put(id, crawler);
 		}
 	}
