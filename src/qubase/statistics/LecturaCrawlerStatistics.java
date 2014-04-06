@@ -34,6 +34,7 @@ public class LecturaCrawlerStatistics {
 		public String name = null;
 		public String status = null;
 		public String upload = null;
+		public String instance = null;
 	}
 	
 	private static class Total {
@@ -100,7 +101,7 @@ public class LecturaCrawlerStatistics {
 		String tableHead = "<tr>";
 		tableHead += "<th " + headStyle + " width=\"24\">&nbsp;</th>";
 		tableHead += "<th " + headStyle + ">ID</th>";
-		tableHead += "<th " + headStyle + ">Name</th>";
+		tableHead += "<th " + headStyle + ">Name [Instance]</th>";
 		tableHead += "<th " + headStyle + ">St.</th>";
 		tableHead += "<th " + headStyle + ">All time</th>";
 		tableHead += "<th " + headStyle + ">24 hrs</th>";
@@ -181,10 +182,12 @@ public class LecturaCrawlerStatistics {
 				String name = "N/A";
 				String status = "N/A";
 				String upload = "N/A";
+				String instance = "";
 				if (crawlers.containsKey(portalId)) {
 					name = crawlers.get(portalId).name;
 					status = crawlers.get(portalId).status;
 					upload = crawlers.get(portalId).upload;
+					instance = " [" + crawlers.get(portalId).instance + "]";
 				}
 				
 				
@@ -223,7 +226,7 @@ public class LecturaCrawlerStatistics {
 				String tableRow = "<tr>";
 				tableRow += "<td " + cellStyle + " width=\"24\">" + img + "</td>";
 				tableRow += "<td " + cellStyle + ">" + portalId + "</td>";
-				tableRow += "<td " + cellStyle + "><b>" + name + "</b></td>";
+				tableRow += "<td " + cellStyle + "><b>" + name + "</b>" + instance + "</td>";
 				tableRow += "<td " + cellStyle + ">" + ((status.equals("1")) ? "ON" : "OFF") + "</td>";
 				tableRow += "<td " + cellStyle + ">" + report.getInt("listingsAllTime") + "</td>";
 				total.listingsAllTime += report.getInt("listingsAllTime");
@@ -348,6 +351,7 @@ public class LecturaCrawlerStatistics {
 			crawler.name = c.getString("name");
 			crawler.status = c.getString("status");
 			crawler.upload = c.getString("upload");
+			crawler.instance = c.getString("instance");
 			crawlers.put(id, crawler);
 		}
 	}
