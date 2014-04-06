@@ -167,7 +167,7 @@ public class Landwirt extends Crawler {
 				String modelName = line.replaceAll("(.*?)</li>.*", "$1");
 				if (!modelName.isEmpty() && !title.isEmpty()) {
 					currentListing.setModelName(modelName);
-					currentListing.setManName(title.replaceAll(modelName, "").trim());
+					currentListing.setManName(title.replace(modelName, "").trim());
 				}
 			}
 			
