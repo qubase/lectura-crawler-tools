@@ -88,7 +88,7 @@ public class LecturaUploader {
 					}
 					
 					subject = "Lectura Uploader - Success";
-					message += "TOTAL: " + recordsToTransferCPTotal + "/" + recordsTransferedCPTotal; 
+					message += "TOTAL: " + recordsTransferedCPTotal + "/" + recordsToTransferCPTotal; 
 				} else {
 					message = "No portals to process loaded.";
 					subject = "Lectura Uploader - Warning";
