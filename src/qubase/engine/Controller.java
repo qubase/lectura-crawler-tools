@@ -28,6 +28,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
+
 public class Controller {
 	ArrayList<Crawler> crawlerList = new ArrayList<Crawler>();
 	private Properties props = null;
@@ -102,11 +105,12 @@ public class Controller {
 				
 				//if this crawler is turned off, don't load it
 				String crawlerStatusFlag = crawlerElement.getAttribute("status");
-				if (crawlerStatusFlag.equals("0")) {
-					continue;
-				}
-				
+				String crawlerUploadFlag = crawlerElement.getAttribute("upload");
 				String crawlerIdString = crawlerElement.getAttribute("id");
+				
+				crawler.setStatus(crawlerStatusFlag.equals("1"));
+				crawler.setUpload(crawlerUploadFlag.equals("1"));
+				
 				if (crawlerIdString == null) {
 					throw new Exception("Crawler ID not defined.");
 				}
@@ -160,6 +164,12 @@ public class Controller {
 					}
 				}
 				
+				saveCrawlerConfig(crawler);
+				
+				if (crawlerStatusFlag.equals("0")) {	
+					continue;
+				}
+				
 				//if the crawler object was set properly, save it to the list, inform otherwise
 				if (crawler.isConfigured()) {
 					logger.finest("Adding crawler: " + crawler.getName());
@@ -195,5 +205,17 @@ public class Controller {
 		DOMSource source = new DOMSource(doc);
 		StreamResult result = new StreamResult(new File(crawlerConfig));
 		transformer.transform(source, result);
+	}
+	
+	private static void saveCrawlerConfig(Crawler crawler) {
+		DBCollection collection = LecturaCrawlerEngine.getDB().getCollection("crawler.config");
+		
+		BasicDBObject doc = new BasicDBObject()
+			.append("_id", crawler.getId())
+			.append("status", (crawler.getStatus()) ? 1 : 0)
+			.append("upload", (crawler.getUpload()) ? 1 : 0)
+			.append("name", crawler.getName());
+		
+		collection.update(new BasicDBObject("_id", crawler.getId()), doc, true, false);
 	}
 }

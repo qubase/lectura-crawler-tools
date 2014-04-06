@@ -25,6 +25,9 @@ public class Crawler {
 	private URL url = null;
 	private int ttl = 0;
 	
+	private boolean status = false;
+	private boolean upload = false;
+	
 	private static int errorsInRow = 0;
 	private static ArrayList<String> errors = new ArrayList<String>();
 	private int errorLimit = 10;
@@ -358,5 +361,21 @@ public class Crawler {
 
 	public void setMaxDuplicates(int maxDuplicates) {
 		this.maxDuplicates = maxDuplicates;
+	}
+
+	public boolean getStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+
+	public boolean getUpload() {
+		return upload;
+	}
+
+	public void setUpload(boolean upload) {
+		this.upload = upload;
 	}
 }
