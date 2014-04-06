@@ -86,6 +86,8 @@ public class Controller {
 		
 		//create all crawler objects
 		NodeList crawlerElements = doc.getElementsByTagName("crawler");
+		Element cc = doc.getDocumentElement();
+		String instance = cc.getAttribute("instance");
 		int crawlerCount = crawlerElements.getLength();
 		for (int i = 0; i < crawlerCount; i++) {
 			Node crawlerNode = crawlerElements.item(i);
@@ -164,7 +166,7 @@ public class Controller {
 					}
 				}
 				
-				saveCrawlerConfig(crawler);
+				saveCrawlerConfig(crawler, instance);
 				
 				if (crawlerStatusFlag.equals("0")) {	
 					continue;
@@ -207,14 +209,15 @@ public class Controller {
 		transformer.transform(source, result);
 	}
 	
-	private static void saveCrawlerConfig(Crawler crawler) {
+	private static void saveCrawlerConfig(Crawler crawler, String instance) {
 		DBCollection collection = LecturaCrawlerEngine.getDB().getCollection("crawler.config");
 		
 		BasicDBObject doc = new BasicDBObject()
 			.append("_id", crawler.getId())
 			.append("status", (crawler.getStatus()) ? 1 : 0)
 			.append("upload", (crawler.getUpload()) ? 1 : 0)
-			.append("name", crawler.getName());
+			.append("name", crawler.getName())
+			.append("instance", instance);
 		
 		collection.update(new BasicDBObject("_id", crawler.getId()), doc, true, false);
 	}
