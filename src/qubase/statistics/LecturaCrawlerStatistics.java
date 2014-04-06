@@ -350,24 +350,15 @@ public class LecturaCrawlerStatistics {
 	}
 	
 	private static void loadCrawlers() throws Exception {
-		//read the XML configuration file
-		File crawlerFile = new File(props.getProperty("crawler-config"));
-		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-		Document doc = dBuilder.parse(crawlerFile);
-		doc.getDocumentElement().normalize();
+		DBCursor cursor = db.getCollection("crawler.config").find().sort(new BasicDBObject("_id", 1));
 		
-		XPath xPath =  XPathFactory.newInstance().newXPath();
-		NodeList _crawlers = (NodeList) xPath.compile("/crawler-config/crawler").evaluate(doc, XPathConstants.NODESET);
-		
-		int size = _crawlers.getLength();
-		for (int i = 0; i < size; i++) {
-			Element c = (Element) _crawlers.item(i);
-			Integer id = Integer.parseInt(c.getAttribute("id"));
+		while (cursor.hasNext()) {
+			BasicDBObject c = (BasicDBObject) cursor.next();
+			Integer id = c.getInt("_id");
 			Crawler crawler = new Crawler();
-			crawler.name = c.getElementsByTagName("name").item(0).getTextContent();
-			crawler.status = c.getAttribute("status");
-			crawler.upload = c.getAttribute("upload");
+			crawler.name = c.getString("name");
+			crawler.status = c.getString("status");
+			crawler.upload = c.getString("upload");
 			crawlers.put(id, crawler);
 		}
 	}
