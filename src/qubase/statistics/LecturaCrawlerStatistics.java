@@ -38,6 +38,7 @@ public class LecturaCrawlerStatistics {
 	}
 	
 	private static class Total {
+		public int crawlerCnt = 0;
 		public int listingsAllTime = 0;
 		public int listings24hrs = 0;
 		public int price = 0;
@@ -174,6 +175,7 @@ public class LecturaCrawlerStatistics {
 			BasicDBList list = (BasicDBList) doc.get("summary");
 			
 			for (Object portalReport : list) {
+				total.crawlerCnt++;
 				BasicDBObject pr = (BasicDBObject) portalReport;
 				
 				Integer portalId = pr.getInt("portalId");
@@ -303,7 +305,7 @@ public class LecturaCrawlerStatistics {
 			tableTotal += "<td " + headStyle + " width=\"24\">&nbsp;</td>";
 			tableTotal += "<td " + headStyle + ">&nbsp;</td>";
 			tableTotal += "<td " + headStyle + "><b>TOTAL</b></td>";
-			tableTotal += "<td " + headStyle + ">&nbsp;</td>";
+			tableTotal += "<td " + headStyle + ">" + total.crawlerCnt + "</td>";
 			tableTotal += "<td " + headStyle + ">" + total.listingsAllTime + "</td>";
 			tableTotal += "<td " + headStyle + "><b>" + total.listings24hrs + "</b></td>";
 			tableTotal += "<td " + headStyle + ">" + total.price + "</td>";
