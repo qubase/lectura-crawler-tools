@@ -325,23 +325,10 @@ public class Landwirt extends Crawler {
 	@Override
 	protected URL modifyUrl(URL originalUrl) {
 		
-		if (status.page == 1) {
-			String html = loadCustomPage(originalUrl);
-			
-			if (html != null) {
-				String[] lines = html.split("\\r?\\n");
-				String regexNextPage = "document.getElementById\\(\"navajax1\"\\)\\.innerHTML\\s*=\\s*'<span\\s*style=\"color:#000000\">1</span>\\s*<a\\s*href=\"([^\"]+)\">2</a>.*$";
-				for (int i = 0; i < lines.length; i++) {
-					if (lines[i].matches(regexNextPage)) {
-						categorySpecialUrlPath = lines[i].replaceAll(regexNextPage, "$1").replaceAll("offset=20", "offset=0");
-						try {
-							return new URL(baseUrl + "/gebrauchte/" + categorySpecialUrlPath);
-						} catch (MalformedURLException e) {
-							logger.severe("Malformed url: " + baseUrl + "/gebrauchte/" + categorySpecialUrlPath + " | " + e.getMessage());
-						}
-					}
-				}
-				return originalUrl;
+		if (status.page == 1 || categorySpecialUrlPath == null) {
+			URL result = retrieveUrl(originalUrl);
+			if (result != null) {
+				return result;
 			}
 		} else {
 			String link = baseUrl + "/gebrauchte/" + categorySpecialUrlPath.replaceAll("offset=0", "offset=" + ((status.page - 1) * 20));
@@ -355,4 +342,24 @@ public class Landwirt extends Crawler {
 		return originalUrl;
 	}
 
+	private URL retrieveUrl(URL originalUrl) {
+		String html = loadCustomPage(originalUrl);
+		
+		if (html != null) {
+			String[] lines = html.split("\\r?\\n");
+			String regexNextPage = "document.getElementById\\(\"navajax1\"\\)\\.innerHTML\\s*=\\s*'<span\\s*style=\"color:#000000\">1</span>\\s*<a\\s*href=\"([^\"]+)\">2</a>.*$";
+			for (int i = 0; i < lines.length; i++) {
+				if (lines[i].matches(regexNextPage)) {
+					categorySpecialUrlPath = lines[i].replaceAll(regexNextPage, "$1").replaceAll("offset=20", "offset=" + ((status.page - 1) * 20));
+					try {
+						return new URL(baseUrl + "/gebrauchte/" + categorySpecialUrlPath);
+					} catch (MalformedURLException e) {
+						logger.severe("Malformed url: " + baseUrl + "/gebrauchte/" + categorySpecialUrlPath + " | " + e.getMessage());
+					}
+				}
+			}
+		}
+		return originalUrl;
+	}
+	
 }
