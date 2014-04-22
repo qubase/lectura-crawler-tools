@@ -120,34 +120,30 @@ public class Landwirt extends Crawler {
 		String[] lines = input.split("\\r?\\n");
 		
 		boolean inHI = false;
-		boolean inType = false;
-		boolean inOpHrs = false;
-		boolean inYear = false;
-		boolean inPrice = false;
 		boolean inAddress = false;
+		boolean inTitle = false;
+		boolean inTel = false;
+		boolean inCell = false;
 		
 		String title = null;
 		
-		String regexTitle = "<a\\s*href=\"[^\"]+\"><h1>(.*?)</h1></a>";
-		String regexInType = "<strong>Type:</strong>";
-		String regexInOpHrs = "<strong>Betriebsstunden:</strong>";
-		String regexInYear = "<strong>Baujahr:</strong>";
-		String regexPriceCurrency = "<strong>Preis:\\s*([A-Z]{1,4})\\s*([\\.0-9]+),--</strong>";
-		String regexVAT = "<i>(.*?)</i>";
+		String regexTitleStart = "<a\\s*href=\"[^\"]+\"><h1>.*";
+		String regexTitleEnd = ".*</h1></a>";
+		String regexType = ".*<strong>Type:</strong>\\s*(.*?)\\s*$";
+		String regexOpHrs = ".*<strong>Betriebsstunden:</strong>\\s*(.*?)\\s*$";
+		String regexYear = ".*<strong>Baujahr:</strong>\\s*(.*?)\\s*$";
+		String regexPriceCurrencyVAT = ".*<strong>Preis:\\s*([A-Z]{1,4})\\s*([\\.0-9]+),--</strong>.*$";
 		String regexInAddress = ".*\\s*<address>\\s*.*";
-		
-		String regexZipRegion = "([- A-Z0-9]+)\\s+-\\s+(.*?)<.*$";
-		String regexTel = "<span\\s*class=\"telefonnummerdetail\\s*telefonicon\"></span>\\s*(\\+[0-9]+)\\s.*";
-		String regexCell = "<span\\s*class=\"telefonnummerdetail\\s*handyicon\"></span>\\s*(\\+[0-9]+)\\s.*";
+		String regexZipRegion = ".*<br\\s*/>\\s*([- A-Z0-9]+)\\s+-\\s+(.*?)<.*$";
+		String regexInTel = ".*<span\\s*class=\"telefonnummerdetail\\s*telefonicon\">.*";
+		String regexInCell = ".*<span\\s*class=\"telefonnummerdetail\\s*handyicon\">.*";
+		String regexTelCell = ".*</span>\\s*(\\+[0-9]+)\\s.*";
 		
 		String regexNew = "<img\\s*src=\"/gebrauchte/cssjs/2.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>";//1 - new
 		String regexShow = "<img\\s*src=\"/gebrauchte/cssjs/1.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>";//2 - show
 		
 		boolean zipRegionDone = false;
 		boolean statusDone = false;
-		
-		String price = null;
-		String currency = null;
 		
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
@@ -156,42 +152,49 @@ public class Landwirt extends Crawler {
 				inHI = true;
 			}
 			
-			if (line.matches(regexTitle) && inHI) {
+			if (inTitle && !line.matches(regexTitleEnd)) {
+				if (title != null) {
+					title += line;
+				}
+			}
+			
+			if (line.matches(regexTitleEnd) && inHI) {
+				if (title != null) {
+					title += line;
+				} else {
+					title = line;
+				}
+				inTitle = false;
 				inHI = false;
-				title = line.replaceAll(regexTitle, "$1");
+				
+				title = title.replaceAll("<a\\s*href=\"[^\"]+\"><h1>(.*?)</h1></a>", "$1");
+			}
+			
+			if (line.matches(regexTitleStart) && inHI) {
+				title = line;
+				inTitle = true;
 			}
 			
 			//model name + manufacturer
-			if (inType) {
-				inType = false;
-				String modelName = line.replaceAll("(.*?)</li>.*", "$1");
+			if (line.matches(regexType)) {
+				String modelName = line.replaceAll(regexType, "$1");
 				if (!modelName.isEmpty() && !title.isEmpty()) {
 					currentListing.setModelName(modelName);
 					currentListing.setManName(title.replace(modelName, "").trim());
 				}
 			}
 			
-			if (line.matches(regexInType)) {
-				inType = true;
-			}
-			
 			//op hrs
-			if (inOpHrs) {
-				inOpHrs = false;
-				String opHrs = line.replaceAll("([0-9]+)</li>.*", "$1");
+			if (line.matches(regexOpHrs)) {
+				String opHrs = line.replaceAll(regexOpHrs, "$1");
 				if (!opHrs.isEmpty()) {
 					currentListing.setCounter(opHrs);
 				}
 			}
 			
-			if (line.matches(regexInOpHrs)) {
-				inOpHrs = true;
-			}
-			
 			//year
-			if (inYear) {
-				inYear = false;
-				String year = line.replaceAll("([0-9]+)</li>.*", "$1");
+			if (line.matches(regexYear)) {
+				String year = line.replaceAll(regexYear, "$1");
 				
 				if (!year.isEmpty()) {
 					currentListing.setYear(year);
@@ -215,16 +218,16 @@ public class Landwirt extends Crawler {
 				}
 			}
 			
-			if (line.matches(regexInYear)) {
-				inYear = true;
-			}
-			
 			//price
-			if (inPrice && line.matches(regexVAT)) {
-				String text = line.replaceAll(regexVAT, "$1");
-				inPrice = false;
+			if (line.matches(regexPriceCurrencyVAT)) {
+				String price = line.replaceFirst(regexPriceCurrencyVAT, "$2");
+				String currency = line.replaceFirst(regexPriceCurrencyVAT, "$1");
+				String text = null;
+				if (line.matches(".*<i>[^<]+</i>.*")) {
+					text = line.replaceFirst(".*<i>([^<]+)</i>.*", "$1");
+				}
 				
-				if (text.startsWith("inkl")) {
+				if (text != null && text.startsWith("inkl")) {
 					//if the VAT is included, need to recalculate
 					if (price != null) {
 						String percentStr = text.replaceAll("^[^0-9]*([,0-9]+)\\s*%[^0-9]*$", "$1").replaceAll(",", ".");
@@ -259,12 +262,6 @@ public class Landwirt extends Crawler {
 				}
 			}
 			
-			if (line.matches(regexPriceCurrency)) {
-				price = line.replaceAll(regexPriceCurrency, "$2");
-				currency = line.replaceAll(regexPriceCurrency, "$1");
-				inPrice = true;
-			}
-			
 			//address
 			if (line.matches(regexZipRegion) && inAddress && !zipRegionDone) {
 				String zip = line.replaceAll(regexZipRegion, "$1").trim();
@@ -281,8 +278,9 @@ public class Landwirt extends Crawler {
 				zipRegionDone = true;
 			}
 			
-			if (line.matches(regexTel) && inAddress) {
-				String tel = line.replaceAll(regexTel, "$1");
+			if (inTel && inAddress) {
+				inTel = false;
+				String tel = line.replaceAll(regexTelCell, "$1");
 				
 				if (tel != null && !tel.isEmpty()) {
 					inAddress = false;
@@ -293,8 +291,13 @@ public class Landwirt extends Crawler {
 				}
 			}
 			
-			if (line.matches(regexCell) && inAddress) {
-				String cell = line.replaceAll(regexCell, "$1");
+			if (line.matches(regexInTel) && inAddress) {
+				inTel = true;
+			}
+			
+			if (inCell && inAddress) {
+				inCell = false;
+				String cell = line.replaceAll(regexTelCell, "$1");
 				
 				if (cell != null && !cell.isEmpty()) {
 					inAddress = false;
@@ -303,6 +306,10 @@ public class Landwirt extends Crawler {
 						currentListing.setCountry(country);
 					}
 				}
+			}
+			
+			if (line.matches(regexInCell) && inAddress) {
+				inCell = true;
 			}
 			
 			if (line.matches(regexInAddress)) {
@@ -320,6 +327,8 @@ public class Landwirt extends Crawler {
 				statusDone = true;
 			}
 		}
+		
+		System.out.println("here");
 	}
 
 	@Override
