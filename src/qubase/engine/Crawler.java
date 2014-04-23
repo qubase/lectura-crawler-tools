@@ -28,8 +28,8 @@ public class Crawler {
 	private boolean status = false;
 	private boolean upload = false;
 	
-	private static int errorsInRow = 0;
-	private static ArrayList<String> errors = new ArrayList<String>();
+	private int errorsInRow = 0;
+	private ArrayList<String> errors = new ArrayList<String>();
 	private int errorLimit = 10;
 	private long time = 0;
 	
