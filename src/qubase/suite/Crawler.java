@@ -127,12 +127,17 @@ abstract public class Crawler {
 		
 		//load the list if needed
 		if (status.list.isEmpty() && !status.siteMap.isEmpty()) {
+			String coordinates = "[" + status.siteMapIndex + ", " + status.page + ", " + status.pagePosition + "]";
+			URL listUrl = modifyUrl(status.siteMap.get(status.siteMapIndex).url);
+			logger.finest("Loading list: " + listUrl + " " + coordinates);
+			
 			try {
-				String coordinates = "[" + status.siteMapIndex + ", " + status.page + ", " + status.pagePosition + "]";
-				URL listUrl = modifyUrl(status.siteMap.get(status.siteMapIndex).url);
-				logger.finest("Loading list: " + listUrl + " " + coordinates);
 				loadPage(listUrl, listParser);
-				
+			} catch (Exception e) {
+				response = "Failed to load the list: [" + status.siteMap.get(status.siteMapIndex).url + "] " + e.getMessage();
+				logger.severe(response);
+				return error + response;
+			} finally {
 				//if after loading the page list is still empty even after second attempt, we should probably try next category, we are out of range of the pager 
 				//this can happen when loading an older status and the page structure changed in the meantime
 				if (status.list.isEmpty()) {
@@ -149,11 +154,6 @@ abstract public class Crawler {
 					}
 					return error + response;
 				}
-			} catch (Exception e) {
-				response = "Failed to load the list: [" + status.siteMap.get(status.siteMapIndex).url + "] " + e.getMessage();
-				logger.severe(response);
-				status.nextPage().save(statusFile);
-				return error + response;
 			}
 		}
 		
