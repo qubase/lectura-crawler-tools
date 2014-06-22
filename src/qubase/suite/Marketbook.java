@@ -19,6 +19,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.util.NameValuePair;
@@ -249,7 +250,7 @@ public class Marketbook extends Crawler {
 
 	@Override
 	protected URL modifyUrl(URL originalUrl) {
-		String url = originalUrl.toString().replaceAll("&pg=[0-9]+", "&pg=" + status.page + "/");
+		String url = originalUrl.toString().replaceAll("&pg=[0-9]+", "&pg=" + status.page);
 		try {
 			return new URL(url);
 		} catch (MalformedURLException e) {
@@ -391,7 +392,16 @@ public class Marketbook extends Crawler {
 			//also the logging should be turned of globally
 			java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.OFF);
 		    java.util.logging.Logger.getLogger("org.apache.http").setLevel(java.util.logging.Level.OFF);
-			webClient = new WebClient();
+			
+		    if (useProxy) {
+		    	webClient = new WebClient(BrowserVersion.CHROME, 
+		    			LecturaCrawlerSuite.getProperties().getProperty("proxy-protocol") + 
+		    				LecturaCrawlerSuite.getProperties().getProperty("proxy-host"),
+	    				Integer.parseInt(LecturaCrawlerSuite.getProperties().getProperty("proxy-port"))
+		    			);
+		    } else {
+		    	webClient = new WebClient(BrowserVersion.CHROME);
+		    }
 		}
 		
 		HtmlPage page = null;
@@ -412,6 +422,7 @@ public class Marketbook extends Crawler {
 			}
 			
 			try {	
+				LecturaCrawlerSuite.waitForTorPolipo();
 				page = webClient.getPage(url);
 			} catch (Exception e) {
 				logger.severe("Failed to retrieve page from htmlunit: " + e.getMessage());
@@ -437,5 +448,8 @@ public class Marketbook extends Crawler {
 		} else {
 			logger.severe("Failed to load page: [" + url + "]");
 		}
+		
+		page.cleanUp();
+		webClient.closeAllWindows();
 	}
 }
