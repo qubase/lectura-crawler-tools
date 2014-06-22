@@ -187,7 +187,7 @@ public class LecturaCrawlerSuite {
 				+ ref);
 	}
 
-	private static void waitForTorPolipo() throws IOException, InterruptedException {
+	public static void waitForTorPolipo() throws IOException, InterruptedException {
 		int interval = Integer.parseInt(props.getProperty("tor-polipo-timeout"));
 		boolean ready = torPolipoRunning();
 		if (ready) {
