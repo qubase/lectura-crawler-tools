@@ -399,8 +399,7 @@ public class Marketbook extends Crawler {
 
 		    if (_useProxy) {
 		    	webClient = new WebClient(BrowserVersion.CHROME, 
-		    			LecturaCrawlerSuite.getProperties().getProperty("proxy-protocol") + 
-		    				LecturaCrawlerSuite.getProperties().getProperty("proxy-host"),
+		    			LecturaCrawlerSuite.getProperties().getProperty("proxy-host"),
 	    				Integer.parseInt(LecturaCrawlerSuite.getProperties().getProperty("proxy-port"))
 		    			);
 		    } else {
