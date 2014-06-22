@@ -387,13 +387,17 @@ public class Marketbook extends Crawler {
 	}
 	
 	private void loadPageFromHtmlUnit(URL url, Parser parser) {
+		boolean _useProxy = (useProxy == null) 
+				? LecturaCrawlerSuite.getProperties().getProperty("use-proxy").equals("1")
+				: useProxy;
+		
 		if (webClient == null) {
 			//the webClient should be a global object not to have one for every parser which needs it
 			//also the logging should be turned of globally
 			java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.OFF);
 		    java.util.logging.Logger.getLogger("org.apache.http").setLevel(java.util.logging.Level.OFF);
-			
-		    if (useProxy) {
+
+		    if (_useProxy) {
 		    	webClient = new WebClient(BrowserVersion.CHROME, 
 		    			LecturaCrawlerSuite.getProperties().getProperty("proxy-protocol") + 
 		    				LecturaCrawlerSuite.getProperties().getProperty("proxy-host"),
@@ -402,6 +406,8 @@ public class Marketbook extends Crawler {
 		    } else {
 		    	webClient = new WebClient(BrowserVersion.CHROME);
 		    }
+		    
+		    webClient.getOptions().setThrowExceptionOnScriptError(false); 
 		}
 		
 		HtmlPage page = null;
@@ -421,8 +427,10 @@ public class Marketbook extends Crawler {
 				logger.info("Retrying to get page after " + retryAfter + "ms : Attempt " + new Integer(attempts + 1) + "/" + retry + " " + url);
 			}
 			
-			try {	
-				LecturaCrawlerSuite.waitForTorPolipo();
+			try {
+				if (_useProxy) {
+					LecturaCrawlerSuite.waitForTorPolipo();
+				}
 				page = webClient.getPage(url);
 			} catch (Exception e) {
 				logger.severe("Failed to retrieve page from htmlunit: " + e.getMessage());
