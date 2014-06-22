@@ -453,11 +453,10 @@ public class Marketbook extends Crawler {
             }
 			
 			parser.parse(page.asXml());
+			page.cleanUp();
 		} else {
 			logger.severe("Failed to load page: [" + url + "]");
 		}
-		
-		page.cleanUp();
 		webClient.closeAllWindows();
 	}
 }
