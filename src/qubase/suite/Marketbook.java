@@ -29,15 +29,17 @@ import com.gargoylesoftware.htmlunit.util.NameValuePair;
 public class Marketbook extends Crawler {
 
 	WebClient webClient;
+	String baseUrl = "http://www.marketbook.de";
 	
 	public Marketbook() {
 		super();
 		name = "marketbook";
-		
+		//no unique sitemap entry point, different approach chosen, crawling by manufacturer - manufacturer index for construction and ag equipment on different URLs
+		//the provided one is for construction equipment, ag is called separately afterwards
 		try {
-			siteMapUrl = new URL("http://www.marketbook.de/sitemap.xml");
+			siteMapUrl = new URL("http://www.marketbook.de/drilldown/manulist.aspx?lp=MAT");
 		} catch (MalformedURLException e) {
-			logger.severe("Failed to init siteMapUrl: [http://www.marketbook.de/sitemap.xml] " + e.getMessage());
+			logger.severe("Failed to init siteMapUrl: [http://www.marketbook.de/drilldown/manulist.aspx?lp=MAT] " + e.getMessage());
 		}
 		statusFile = name + ".status";
 	}
@@ -45,54 +47,111 @@ public class Marketbook extends Crawler {
 	@Override
 	protected void parseSiteMap(String input) {
 		String[] lines = input.split("\\r?\\n");
-		String regexLink = "^\\s*<loc>(.+?)</loc>\\s*$";
-		for (String lineIn : lines) {
-			String line = lineIn.trim();
-			if (line.matches(regexLink)) {
-				String link = line.replaceAll(regexLink, "$1");
-				parseSiteMapCustom(link);
+		String xml = "";
+		boolean inList = false;
+		
+		//load the list
+		for (int i = 0; i < lines.length; i++) {
+			String line = lines[i].trim();
+			
+			if (line.matches("</tr>") && inList) {
+				xml += line;
+				break;
+			}
+			
+			if (line.matches("<tr\\s*id=\"ctl00_ContentPlaceHolder1_DrillDown1_trInformation\">")) {
+				inList = true;
+			}
+			
+			if (inList) {
+				xml += line;
 			}
 		}
-		status.siteMap.add(new SiteMapLocation(siteMapUrl, "Sitemap.xml"));
-	}
-	
-	private void parseSiteMapCustom(String link) {
 		
-		URL url = null;
-		try {
-			url = new URL(link);
-		} catch (MalformedURLException e) {
-			logger.warning("Failed to parse custom site map URL: " + link);
-			return;
-		}
-		
-		String input = loadCustomPage(url);
-		String[] lines = input.split("\\r?\\n");
-		String regexLink = "^\\s*<loc>(.+?)</loc>\\s*$";
-		for (String lineIn : lines) {
-			String line = lineIn.trim();
-			if (line.matches(regexLink)) {
-				String listLink = line.replaceAll(regexLink, "$1");
-				if (listLink.matches(".*?http://www.marketbook.ca/listingsdetail/detail.aspx.+$")) {
+		//process the list using xml/xpath approach
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+	    DocumentBuilder builder; 
+	    xml = xml.replaceAll("&", "&amp;");
+	    try {  
+	        builder = factory.newDocumentBuilder();  
+	        Document document = builder.parse(new InputSource(new StringReader(xml)));
+	        
+	        XPath xPath =  XPathFactory.newInstance().newXPath();
+
+	        NodeList links = (NodeList) xPath.compile("//tr/td/a").evaluate(document, XPathConstants.NODESET);
+	        
+	        int size = links.getLength();	       
+			for (int i = 0; i < size; i++) {
+				Element link = (Element) links.item(i);
+				String name = link.getTextContent();
+				String href = link.getAttribute("href").replaceAll("&amp;", "&");
+				
+				//this goes directly to the list
+				if (href.startsWith("/list")) {
 					try {
-						String finalLink = listLink
-								.replaceAll("www\\.marketbook\\.ca", "www.marketbook.de")
-								.replaceAll("&amp;", "&")
-								.replaceAll("(.*?)lp=([A-Za-z]+)&ohid=([0-9]+)", "$1OHID=$3&LP=$2")
-								.trim();
-						status.list.add(new URL(finalLink));
+						addToSiteMap(new SiteMapLocation(new URL(baseUrl + href + "&pg=1"), name));
 					} catch (MalformedURLException e) {
-						logger.severe("Failed to parse URL: " + listLink);
+						logger.severe("Failed to parse URL: " + baseUrl + href + "&pg=1");
+					}
+				}
+				
+				//if this is a drilldown
+				if (href.startsWith("/drilldown")) {
+					int listLength = Integer.parseInt(name.replaceFirst(".*?\\s\\(([0-9]+)\\)", "$1"));
+					//if this is a drilldown with less than 10K results, transform the URL to list, otherwise a break down is needed
+					//beacause they don't return lists longer than 10K
+					if (listLength < 10000) {
+						href = href.replaceFirst("drilldown/modellist.aspx", "list/list.aspx"); 
+						
+						try {
+							addToSiteMap(new SiteMapLocation(new URL(baseUrl + href + "&pg=1"), name));
+						} catch (MalformedURLException e) {
+							logger.severe("Failed to parse URL: " + baseUrl + href + "&pg=1");
+						}
+					} else {
+						
 					}
 				}
 			}
-		}
+	    } catch (Exception e) {  
+	        logger.severe("Couldn't parse site map XML: " + e.getMessage());  
+	    }
 	}
 
 	@Override
 	protected void parseList(String input) {
-		// no need to implement, all of this happens already in the first step - sitemap capturing
-		// where instead of finding the sitemap links, listings links are captured directly
+		String[] lines = input.split("\\r?\\n");
+		String regexPager = ".*?<b>Sie sind jetzt auf Seite ([0-9]+) von ([0-9]+)<br\\s*/>";
+		for (String lineIn : lines) {
+			String line = lineIn.trim();
+			
+			if (line.matches(".*?href=\"/listingsdetail/detail.aspx.*?\"\\s*id=\"aDetailsLink\">")) {
+				String href = line.replaceFirst(".*?href=\"([^\"]+)\".*$", "$1").replaceAll("&amp;", "&");
+				
+				try {
+					URL url = new URL(baseUrl + href);
+					if (!status.list.contains(url)) {
+						status.list.add(url);
+					}
+				} catch (MalformedURLException e) { 
+					logger.severe("Failed to add URL to the list: [" + baseUrl + href + "] " + e.getMessage());
+				}
+			}
+			
+			if (line.matches(regexPager)) {
+				String nowAt = line.replaceAll(regexPager, "$1");
+				String siteCnt = line.replaceAll(regexPager, "$2");
+				if (!nowAt.equals(siteCnt)) {
+					status.nextPageAvailable = true;
+				}
+				break;
+			}
+			
+			if (line.startsWith("<span id=\"ctl00_ContentPlaceHolder1_lblDetailedSearchInfo")) {
+				break;
+				//no need to iterate further, there's a lot of useless lines after the relevant content is already processed
+			}
+		}
 	}
 
 	@Override
@@ -190,7 +249,13 @@ public class Marketbook extends Crawler {
 
 	@Override
 	protected URL modifyUrl(URL originalUrl) {
-		return originalUrl;
+		String url = originalUrl.toString().replaceAll("&pg=[0-9]+", "&pg=" + status.page + "/");
+		try {
+			return new URL(url);
+		} catch (MalformedURLException e) {
+			logger.severe("Failed to parse URL: [" + url + "] " + e.getMessage());
+			return originalUrl;
+		}
 	}
 	
 	@Override
@@ -243,7 +308,37 @@ public class Marketbook extends Crawler {
 			}
 		}
 		
-		//no list load part
+		//load the list if needed
+		if (status.list.isEmpty() && !status.siteMap.isEmpty()) {
+			String coordinates = "[" + status.siteMapIndex + ", " + status.page + ", " + status.pagePosition + "]";
+			URL listUrl = modifyUrl(status.siteMap.get(status.siteMapIndex).url);
+			logger.finest("Loading list: " + listUrl + " " + coordinates);
+			
+			try {
+				loadPageFromHtmlUnit(listUrl, listParser);
+			} catch (Exception e) {
+				response = "Failed to load the list: [" + status.siteMap.get(status.siteMapIndex).url + "] " + e.getMessage();
+				logger.severe(response);
+				return error + response;
+			} finally {
+				//if after loading the page list is still empty even after second attempt, we should probably try next category, we are out of range of the pager 
+				//this can happen when loading an older status and the page structure changed in the meantime
+				if (status.list.isEmpty()) {
+					response = "Failed to load list - Empty: " + listUrl + " " + coordinates;
+					logger.warning(response);
+					if (firstEmptyList) {
+						//this is a first empty list, give it one more chance and go to the next page
+						status.nextPage().save(statusFile);
+						firstEmptyList = false;
+					} else {
+						//this is the second time in a row we've received an empty list, go to the next category this time
+						status.nextCategory().save(statusFile);
+						firstEmptyList = true;
+					}
+					return error + response;
+				}
+			}
+		}
 		
 		//load the listing
 		if (!status.list.isEmpty()) {
