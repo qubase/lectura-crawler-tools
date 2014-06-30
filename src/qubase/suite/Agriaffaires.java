@@ -8,9 +8,6 @@ import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.htmlcleaner.HtmlCleaner;
-import org.htmlcleaner.TagNode;
-
 public class Agriaffaires extends Crawler {
 	
 	//save already loaded links when traversing sitemap to not to visit the same more times
@@ -35,31 +32,16 @@ public class Agriaffaires extends Crawler {
 	protected void parseSiteMap(String input) {
 		
 		String[] lines = input.split("\\r?\\n");
-		
+		String regexLvl1Link = "^.*<h3\\s*style=\"margin-top:-3px;\"><a\\s*href=\"([^\"]+)\">.*?</a><span class=\"pac_NbAnnTot\">.*$";
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
-			if (line.matches("^.*<div class=\"pac_MenuRub\"\\s*>.*$")) {
-				
+			if (line.matches(regexLvl1Link)) {
 				try {
-					String html = line;
+					URL level1url = new URL(siteMapUrl + line.replaceFirst(regexLvl1Link, "$1").replaceFirst("/", ""));
 					
-					HtmlCleaner cleaner = new HtmlCleaner();
-					TagNode root = cleaner.clean(html);
-					
-					Object[] level1links = root.evaluateXPath("//div/h3/a");
-					
-					for (Object level1link : level1links) {
-						URL level1url = new URL(siteMapUrl + ((TagNode)level1link).getAttributeByName("href").replaceFirst("/", ""));
-						
-						if (blacklist.contains(level1url) || personalBlacklist.contains(level1url)) {
-			        		continue;
-			        	}
-						
-						traverse(level1url, null);
-						personalBlacklist.clear();//this was needed only for traversing, clear it for the next traversing
-					}
-					
-				} catch (Exception e) {
+					traverse(level1url, null);
+					personalBlacklist.clear();//this was needed only for traversing, clear it for the next traversing
+				} catch (MalformedURLException e) {
 					logger.severe("Failed to parse site map: " + e.getMessage());
 				}
 			}
@@ -204,6 +186,9 @@ public class Agriaffaires extends Crawler {
 			if (line.matches(regexLocation)) {
 				String val = line.replaceAll(regexLocation, "$1");
 				if (!isNotAvailableValue(val)) {
+					if (val.matches("[^\\(]+\\s\\(.*?\\)")) {
+						val = val.replaceFirst("([^\\(]+)\\s\\(.*?\\)", "$1");
+					}
 					currentListing.setCountry(val);
 				}
 			}
