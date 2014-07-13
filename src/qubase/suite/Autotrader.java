@@ -65,7 +65,8 @@ public class Autotrader extends Crawler {
 		String regexInBreadCrumbs = "<a\\s*href=\".*?\">Used\\sFarm\\sMachinery</a>\\s*&gt;";
 		String regexInAdvert = "<div\\s*class=\"advertInfo\">";
 		String regexManufacturer = "<a href=\".*?\">(.*?)</a>\\s*&gt;";
-		String regexPrice = "&pound;([,\\.0-9]+)(\\s\\+VAT)?";
+		String regexPrice = "<div>&pound;([,\\.0-9]+)(\\s\\+VAT)?</div>";
+		String regexPriceEur = "<div\\s*class=\"priceEur\">&euro;([,\\.0-9]+)</div>";
 		String regexInPrice = "<div\\s*class=\"price\">";
 		
 		String manufacturer = null;
@@ -98,14 +99,27 @@ public class Autotrader extends Crawler {
 			}
 			
 			//price
-			if (line.matches(regexPrice) && inPrice) {
-				String price = line.replaceAll(regexPrice, "$1");
-				inPrice = false;
-				
-				if (price != null && !price.isEmpty()) {
-					currentListing.setPrice(price);
-					currentListing.setCurrency("GBP");
+			if (inPrice) {
+				if (line.matches(regexPrice)) {
+					String price = line.replaceAll(regexPrice, "$1");
+					if (price != null && !price.isEmpty()) {
+						currentListing.setPrice(price);
+						currentListing.setCurrency("GBP");
+					}
+					inPrice = false;
 				}
+				
+				if (lines[i+1].trim().matches(regexPriceEur)) {
+					line = lines[i+1].trim();
+					String price = line.replaceAll(regexPriceEur, "$1");
+					if (price != null && !price.isEmpty()) {
+						currentListing.setPrice(price);
+						currentListing.setCurrency("EUR");
+					}
+					inPrice = false;
+					i++;
+				}
+				continue;
 			}
 			
 			if (inPrice && line.matches("</div>")) {
