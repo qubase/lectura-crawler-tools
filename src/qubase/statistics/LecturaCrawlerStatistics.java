@@ -30,6 +30,8 @@ public class LecturaCrawlerStatistics {
 	private static Properties props = new Properties();
 	private static HashMap<Integer, Crawler> crawlers = new HashMap<Integer, Crawler>();
 	
+	private static long days;
+	
 	private static class Crawler {
 		public String name = null;
 		public String status = null;
@@ -67,6 +69,19 @@ public class LecturaCrawlerStatistics {
 			}
 			loadCrawlers();
 			String[] recipients = props.getProperty("email-recipients").split("\\s*,\\s*");
+			days = Long.parseLong(props.getProperty("history-days"));
+			for (int i = 0; i < args.length; i++) {
+				if (args[i].matches("history-days=[0-9]+")) {
+					days = Long.parseLong(args[i].split("\\s*=\\s*")[1].trim());
+				}
+				
+				if (args[i].matches("email-recipients=[-0-9a-zA-Z@\\.,]+")) {
+					String[] r = (args[i].split("\\s*=\\s*")[1].trim().split(","));
+					recipients = new String[r.length];
+					recipients = r;
+				}
+			}
+			
 			emailBody = prepareEmail();
 			Email.send(recipients, "Lectura Crawler Statistics", emailBody, props.getProperty("email-user"), props.getProperty("email-pass"), true);
 			
@@ -87,8 +102,6 @@ public class LecturaCrawlerStatistics {
 	}
 	
 	private static String prepareEmail() {
-		long days = Integer.parseInt(props.getProperty("history-days"));
-		
 		DBCollection coll = db.getCollection("listings.report");
 		long daysToMillis = (days * 24L * 60L * 60L * 1000L);
 		long nowToMillis = new Date().getTime();
