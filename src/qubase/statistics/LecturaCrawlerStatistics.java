@@ -87,10 +87,13 @@ public class LecturaCrawlerStatistics {
 	}
 	
 	private static String prepareEmail() {
-		int days = Integer.parseInt(props.getProperty("history-days"));
+		long days = Integer.parseInt(props.getProperty("history-days"));
 		
 		DBCollection coll = db.getCollection("listings.report");
-		Date historicalDate = new Date((new Date()).getTime() - days * 24 * 60 * 60 * 1000);
+		long daysToMillis = (days * 24L * 60L * 60L * 1000L);
+		long nowToMillis = new Date().getTime();
+		long historicalToMillis = nowToMillis - daysToMillis;
+		Date historicalDate = new Date(historicalToMillis);
 		DBCursor cursor = coll.find(new BasicDBObject("date", new BasicDBObject("$gte", historicalDate)));
 		cursor.sort(new BasicDBObject("date", -1));
 		
