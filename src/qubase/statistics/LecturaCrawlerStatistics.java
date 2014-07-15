@@ -52,6 +52,7 @@ public class LecturaCrawlerStatistics {
 		public int country = 0;
 		public int region = 0;
 		public int zip = 0;
+		public int company = 0;
 		public int attempts = 0;
 		public int requests = 0;
 		public int duplicates = 0;
@@ -123,14 +124,15 @@ public class LecturaCrawlerStatistics {
 		tableHead += "<th " + headStyle + ">All time</th>";
 		tableHead += "<th " + headStyle + ">24 hrs</th>";
 		tableHead += "<th " + headStyle + ">Price</th>";
-		tableHead += "<th " + headStyle + ">Curr.</th>";
+		tableHead += "<th " + headStyle + ">Curr</th>";
 		tableHead += "<th " + headStyle + ">Year</th>";
 		tableHead += "<th " + headStyle + ">Hrs/Km</th>";
-		tableHead += "<th " + headStyle + ">Cat.</th>";
+		tableHead += "<th " + headStyle + ">Cat</th>";
 		tableHead += "<th " + headStyle + ">Serial</th>";
-		tableHead += "<th " + headStyle + ">Country</th>";
-		tableHead += "<th " + headStyle + ">Region</th>";
+		tableHead += "<th " + headStyle + ">Cntr</th>";
+		tableHead += "<th " + headStyle + ">Reg</th>";
 		tableHead += "<th " + headStyle + ">Zip</th>";
+		tableHead += "<th " + headStyle + ">Cmpn</th>";
 		tableHead += "<th " + headLeftStyle + ">A</th>";
 		tableHead += "<th " + headStyle + ">R</th>";
 		tableHead += "<th " + headStyle + ">D</th>";
@@ -139,7 +141,7 @@ public class LecturaCrawlerStatistics {
 		tableHead += "<th " + headStyle + ">1RSec</th>";
 		tableHead += "</tr>\n";
 		
-		String colspan = "21";
+		String colspan = "22";
 		
 		String titleOK = "Seems to be OK";
 		String titleOFF = "This one's OFF";
@@ -292,6 +294,10 @@ public class LecturaCrawlerStatistics {
 				thisCellStyle = (report.getInt("zip") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
 				tableRow += "<td " + thisCellStyle + ">" + report.getInt("zip") + "</td>";
 				total.zip += report.getInt("zip");
+				
+				thisCellStyle = (report.getInt("company") == 0) ? (status.equals("1")) ? alarmCellStyle : cellStyle : cellStyle;
+				tableRow += "<td " + thisCellStyle + ">" + report.getInt("company") + "</td>";
+				total.company += report.getInt("company");
 				
 				//stats
 				int attempts = (report.get("attempts") != null) ?  report.getInt("attempts") : 0;
