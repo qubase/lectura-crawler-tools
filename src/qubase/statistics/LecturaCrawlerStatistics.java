@@ -339,6 +339,7 @@ public class LecturaCrawlerStatistics {
 			tableTotal += "<td " + headStyle + ">" + total.country + "</td>";
 			tableTotal += "<td " + headStyle + ">" + total.region + "</td>";
 			tableTotal += "<td " + headStyle + ">" + total.zip + "</td>";
+			tableTotal += "<td " + headStyle + ">" + total.company + "</td>";
 			tableTotal += "<td " + headLeftStyle + ">" + total.attempts + "</td>";
 			tableTotal += "<td " + headStyle + "><b>" + total.requests + "</b></td>";
 			tableTotal += "<td " + headStyle + ">" + total.duplicates + "</td>";
