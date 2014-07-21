@@ -12,8 +12,6 @@ public class CrawlerFactory {
 			return new Agriaffaires();
 		} else if (portalName.equals("forklift")) {
 			return new Forklift();
-		} else if (portalName.equals("marketbook")) {
-			return new Marketbook();
 		} else if (portalName.equals("landwirt")) {
 			return new Landwirt();
 		} else if (portalName.equals("autotrader")) {
