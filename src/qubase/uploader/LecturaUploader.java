@@ -132,7 +132,7 @@ public class LecturaUploader {
 		cursor.sort(new BasicDBObject("createdAt", 1));
 		recordsToTransferCP = cursor.count();
 		
-		String insert = "insert into base_uploaded_data (portal_id, import_id, original_name, original_manufacturer, original_category, original_category_language, url, original_price, currency, operating_hours, year_of_manufacture, country, serial_number, zip_code, region, found_on, worksheet_operator, upload_operator, uploaded_at) values ";
+		String insert = "insert into base_uploaded_data (portal_id, import_id, original_name, original_manufacturer, original_category, original_category_language, url, original_price, currency, operating_hours, year_of_manufacture, country, serial_number, zip_code, region, found_on, worksheet_operator, upload_operator, uploaded_at, company, new) values ";
 		String values = "";
 		
 		int prepared = 0;
@@ -273,7 +273,17 @@ public class LecturaUploader {
 		result += (doc.get("date") != null) ? "'" + processDate((Date) doc.get("date")) + "'," : "NULL,";
 		result += "'qubase',";
 		result += "'qubase',";
-		result += "now()";
+		result += "now(),";
+		result += (doc.get("company") != null) ? "'" + doc.get("company").toString().replaceAll("('|\\\\)", "\\\\$1") + "'," : "NULL,";
+		if ((doc.get("new") != null)) {
+			if ((doc.get("new").equals("1"))) {
+				result += "'new'";
+			} else if ((doc.get("new").equals("2"))) {
+				result += "'show'";
+			} else {
+				result += "'used'";
+			}
+		}
 		
 		return "(" + result + ")";
 	}
