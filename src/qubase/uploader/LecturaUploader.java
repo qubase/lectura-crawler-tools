@@ -276,13 +276,13 @@ public class LecturaUploader {
 		result += "now(),";
 		result += (doc.get("company") != null) ? "'" + doc.get("company").toString().replaceAll("('|\\\\)", "\\\\$1") + "'," : "NULL,";
 		if ((doc.get("new") != null)) {
-			if ((doc.get("new").equals("1"))) {
+			if (doc.get("new").equals(1)) {
 				result += "'new'";
-			} else if ((doc.get("new").equals("2"))) {
+			} else if (doc.get("new").equals(2)) {
 				result += "'show'";
-			} else {
-				result += "'used'";
-			}
+			} 
+		} else {
+			result += "'used'";
 		}
 		
 		return "(" + result + ")";
