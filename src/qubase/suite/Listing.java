@@ -16,6 +16,7 @@ public class Listing {
 	private String date = null;
 	private String url = null;
 	private String newMachine = null;
+	private String company = null;
 	private String dummy = null;
 	
 	private boolean isDuplicate = false;
@@ -117,12 +118,22 @@ public class Listing {
 		this.newMachine = newMachine;
 	}
 	
+	public String getCompany() {
+		return company;
+	}
+	
+	public void setCompany(String company) {
+		this.company = company;
+	}
+	
 	public String getDummy() {
 		return dummy;
 	}
+	
 	public void setDummy(String dummy) {
 		this.dummy = dummy;
 	}
+	
 	public String toString() {
 		String s = LecturaCrawlerSuite.getProperties().getProperty("separator");
 		return (isDuplicate) ? "duplicate" : 
@@ -141,6 +152,7 @@ public class Listing {
 			"date=" + normalizeForOutput(date) + s +
 			"url=" + normalizeForOutput(url) + s +
 			"new=" + normalizeForOutput(newMachine) + s +
+			"company=" + normalizeForOutput(company) + s +
 			"dummy=" + normalizeForOutput(dummy);
 	}
 	

@@ -63,9 +63,9 @@ public class LecturaCrawlerSuite {
 		server.setExecutor(null); // creates a default executor
 		server.start();
 		
-//		Autotrader b = new Autotrader();
+//		Agriaffaires b = new Agriaffaires();
 //		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
-//		b.testListing(new URL("http://farm.autotrader.co.uk/used-farm-machinery/fendt/tractors/2002-fendt-714-diesel-salisbury-ffpa-8ad10a8444b1de390144fda323cd3032"));
+//		b.testListing(new URL("http://www.agriaffaires.de/gebrauchte/untergrundlockerer/4994931/quivogne-ssd8.html"));
 //		System.exit(0);
 	}
 	

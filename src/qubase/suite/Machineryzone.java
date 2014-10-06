@@ -138,6 +138,7 @@ public class Machineryzone extends Crawler {
 		String regexLocation = "^.*?<b>Location</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse country
 		String regexDate = "^.*?<div\\s*class=\"enteteCadre\">.*\\s([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})</div>.*$"; //parse date
 		String regexAddress = "^.*?<b>Address</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse address
+		String regexCompany = "^.*?<td\\s*class=\"droite\\s*vendeur\"\\s*style=\"[^\"]+\"><b><a\\s*href=[^>]+>(.*?)</a></b></td>.*$";//parse company
 		
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
@@ -170,6 +171,13 @@ public class Machineryzone extends Crawler {
 				String val = line.replaceAll(regexSerial, "$1");
 				if (!isNotAvailableValue(val)) {
 					currentListing.setSerial(val);
+				}
+			}
+			
+			if (line.matches(regexCompany)) {
+				String val = line.replaceAll(regexCompany, "$1");
+				if (!isNotAvailableValue(val)) {
+					currentListing.setCompany(val);
 				}
 			}
 			
