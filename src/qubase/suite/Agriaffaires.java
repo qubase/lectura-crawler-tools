@@ -138,7 +138,7 @@ public class Agriaffaires extends Crawler {
 		String regexLocation = "^.*?<b>Standort</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse country
 		String regexDate = "^.*?<div\\s*class=\"enteteCadre\">.*\\s([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})</div>.*$"; //parse date
 		String regexAddress = "^.*?<b>Adresse</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse address
-		String regexCompany = "^.*?<td\\s*class=\"droite\\s*vendeur\"\\s*style=\"[^\"]+\"><b><a\\s*href=[^>]+>(.*?)</a></b></td>.*$";//parse company
+		String regexCompany = "^.*?<td\\s*class=\"droite\\s*vendeur\"\\s*style=\"[^\"]+\"><b>(<a\\s*href=[^>]+>)?(.*?)(</a>)?</b></td>.*$";//parse company
 		
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
@@ -175,7 +175,7 @@ public class Agriaffaires extends Crawler {
 			}
 			
 			if (line.matches(regexCompany)) {
-				String val = line.replaceAll(regexCompany, "$1");
+				String val = line.replaceAll(regexCompany, "$2");
 				if (!isNotAvailableValue(val)) {
 					currentListing.setCompany(val);
 				}

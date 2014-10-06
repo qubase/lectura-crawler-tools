@@ -63,9 +63,9 @@ public class LecturaCrawlerSuite {
 		server.setExecutor(null); // creates a default executor
 		server.start();
 		
-//		Agriaffaires b = new Agriaffaires();
-//		b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
-//		b.testListing(new URL("http://www.agriaffaires.de/gebrauchte/untergrundlockerer/4994931/quivogne-ssd8.html"));
+//		Machineryzone b = new Machineryzone();
+//		//b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
+//		b.testListing(new URL("http://www.machineryzone.eu/used/tower-crane/4797627/potain-igo-13.html"));
 //		System.exit(0);
 	}
 	
