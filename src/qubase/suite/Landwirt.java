@@ -138,6 +138,7 @@ public class Landwirt extends Crawler {
 		String regexInTel = ".*<span\\s*class=\"telefonnummerdetail\\s*telefonicon\">.*";
 		String regexInCell = ".*<span\\s*class=\"telefonnummerdetail\\s*handyicon\">.*";
 		String regexTelCell = ".*</span>\\s*(\\+[0-9]+)\\s.*";
+		String regexCompany = ".*<strong>(.*?)</strong>.*";
 		
 		String regexNew = "<img\\s*src=\"/gebrauchte/cssjs/2.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>";//1 - new
 		String regexShow = "<img\\s*src=\"/gebrauchte/cssjs/1.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>";//2 - show
@@ -167,7 +168,7 @@ public class Landwirt extends Crawler {
 				inTitle = false;
 				inHI = false;
 				
-				title = title.replaceAll("<a\\s*href=\"[^\"]+\"><h1>(.*?)</h1></a>", "$1");
+				title = title.replaceAll("<a\\s*href=\"[^\"]+\"><h1>(.*?)(<div\\s*class=\"h5\".*?</div>)?</h1></a>", "$1");
 			}
 			
 			if (line.matches(regexTitleStart) && inHI) {
@@ -276,6 +277,10 @@ public class Landwirt extends Crawler {
 				}
 				
 				zipRegionDone = true;
+			}
+			
+			if (line.matches(regexCompany) && inAddress) {
+				currentListing.setCompany(line.replaceAll(regexCompany, "$1"));
 			}
 			
 			if (inTel && inAddress) {
