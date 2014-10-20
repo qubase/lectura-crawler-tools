@@ -19,7 +19,7 @@ public class Record {
 	
 	private boolean hasModelName = false;
 	private boolean hasManName = false;
-	
+	private boolean hasDate = false;
 	private boolean isDuplicate = false;
 	
 	public void save() throws Exception {
@@ -32,6 +32,11 @@ public class Record {
 		
 		Date now = new Date();
 		json.append("createdAt", now);
+		
+		if (!hasDate) {
+			json.append("date", now);
+		}
+		
 		if (ttl != 0) {
 			json.append("ttl", addTtl(now));
 		}
@@ -89,6 +94,7 @@ public class Record {
 			}
 		} else if (value.matches("[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}")) {
 			//this is a date
+			hasDate = true;
 			SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
 			Date date = sdf.parse(value);
 			json.append(key, date);
