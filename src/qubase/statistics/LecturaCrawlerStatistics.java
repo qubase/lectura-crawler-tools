@@ -10,9 +10,15 @@ import java.math.RoundingMode;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import qubase.engine.Email;
@@ -31,6 +37,7 @@ public class LecturaCrawlerStatistics {
 	private static HashMap<Integer, Crawler> crawlers = new HashMap<Integer, Crawler>();
 	
 	private static long days;
+	private static int compressedDays;
 	
 	private static class Crawler {
 		public String name = null;
@@ -83,7 +90,25 @@ public class LecturaCrawlerStatistics {
 				}
 			}
 			
-			emailBody = prepareEmail();
+			emailBody = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"><title>Lectura Crawler Statistics</title></head>";
+			emailBody += "<body>\n";
+			emailBody += prepareFull();
+			
+			try {
+				compressedDays = Integer.parseInt(props.getProperty("compressed-days"));
+				if (compressedDays > 0) {
+					emailBody += prepareCompressed();
+				}
+			} catch (NumberFormatException e) {
+				//ignore
+			}
+			
+			if (props.getProperty("listing-examples").equals("1")) {
+				emailBody += prepareListings();
+			}
+			
+			emailBody += "</body>\n";
+			emailBody += "</html>";
 			Email.send(recipients, "Lectura Crawler Statistics", emailBody, props.getProperty("email-user"), props.getProperty("email-pass"), true);
 			
 		} catch (Exception e) {
@@ -102,7 +127,7 @@ public class LecturaCrawlerStatistics {
 		}
 	}
 	
-	private static String prepareEmail() {
+	private static String prepareFull() {
 		DBCollection coll = db.getCollection("listings.report");
 		long daysToMillis = (days * 24L * 60L * 60L * 1000L);
 		long nowToMillis = new Date().getTime();
@@ -110,9 +135,6 @@ public class LecturaCrawlerStatistics {
 		Date historicalDate = new Date(historicalToMillis);
 		DBCursor cursor = coll.find(new BasicDBObject("date", new BasicDBObject("$gte", historicalDate)));
 		cursor.sort(new BasicDBObject("date", -1));
-		
-		String text = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"><title>Lectura Crawler Statistics</title></head>";
-		text += "<body>\n";
 		
 		String headStyle = "style=\"border-bottom: 2px solid #404040;\"";
 		String headLeftStyle = "style=\"border-bottom: 2px solid #404040; border-left: 1px dotted #808080;\"";
@@ -168,10 +190,14 @@ public class LecturaCrawlerStatistics {
 		
 		SimpleDateFormat sdf = (SimpleDateFormat) DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.US);
 		sdf.applyPattern("dd MMM yyyy");
-		
+		String text = "";
 		while (cursor.hasNext()) {
 			BasicDBObject doc = (BasicDBObject) cursor.next();
 			Date reportTimestamp = doc.getDate("date");
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(reportTimestamp);
+			cal.add(Calendar.DATE, -1);
+			reportTimestamp = cal.getTime();
 			Total total = new Total();
 			if (!reportTimestamp.equals(currDate)) {
 				if (first) {
@@ -181,7 +207,7 @@ public class LecturaCrawlerStatistics {
 				}
 				
 				if (iter <= count) {
-					text += "<table cellpadding=\"10\" cellspacing=\"0\" align=\"center\">\n";
+					text += "<table cellpadding=\"10\" cellspacing=\"0\" align=\"center\" width=\"100%\">\n";
 					text += "<tr><th align=\"left\" colspan=\"" + colspan + "\" style=\"padding-top: 25px;\"><h2 style=\"color: #808080\">" + sdf.format(reportTimestamp) + "</h2></th></tr>";
 				}
 				
@@ -353,8 +379,198 @@ public class LecturaCrawlerStatistics {
 		
 		text += tableTail;
 		text += "</table>\n";
-		text += "</body>\n";
-		text += "</html>";
+		return text;
+	}
+	
+	private static String prepareCompressed() {
+		String text = null;
+		
+		DBCollection coll = db.getCollection("listings.report");
+		DBCursor cursor = coll.find()
+				.sort(new BasicDBObject("date", -1))
+				.limit(compressedDays);
+		
+		String headStyle = "style=\"border-bottom: 2px solid #404040; border-right: 1px dotted #a0a0a0;\"";
+		String defaultStyle = "style=\"border-bottom: 1px solid #404040; background: #b2ffb2; color: #505050; border-right: 1px dotted #a0a0a0;\"";
+		String offStyle = "style=\"border-bottom: 1px solid #404040; background: #efefef; color: #a0a0a0; border-right: 1px dotted #a0a0a0;\"";
+		String alarmCellStyle = "style=\"border-bottom: 1px solid #404040; background: #ff6666; color: #505050; border-right: 1px dotted #a0a0a0;\"";
+		
+		int colspan = compressedDays + 1;
+		
+		text = "<table cellpadding=\"10\" cellspacing=\"0\" align=\"center\" width=\"100%\">\n";
+		text += "<tr><th align=\"left\" colspan=\"" + colspan + "\" style=\"padding-top: 25px;\"><h2 style=\"color: #808080\">Compressed overview for " + new Integer(compressedDays).toString() + " days (listings per day)</h2></th></tr>";
+		
+		String tableHead = "<tr>";
+		tableHead += "<th " + headStyle + ">Name</th>";
+		
+		SimpleDateFormat sdf = (SimpleDateFormat) DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.US);
+		sdf.applyPattern("dd MMM");
+		HashMap<Integer, String> lines = new HashMap<Integer, String>();
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		
+		Iterator<Entry<Integer, Crawler>> it = crawlers.entrySet().iterator();
+	    while (it.hasNext()) {
+	        @SuppressWarnings("rawtypes")
+			Map.Entry pairs = (Map.Entry)it.next();
+			String name = ((Crawler) pairs.getValue()).name;
+			Integer pid = (Integer) pairs.getKey();
+			
+			String def = ((Crawler) pairs.getValue()).status.equals("1") ? defaultStyle : offStyle;
+			
+	        lines.put(pid, "<tr><td " + def + " align=\"right\"><b>" + name + "</b></td>");
+	        ids.add(pid);
+	    }
+	    
+		while (cursor.hasNext()) {
+			BasicDBObject doc = (BasicDBObject) cursor.next();
+			Date reportTimestamp = doc.getDate("date");
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(reportTimestamp);
+			cal.add(Calendar.DATE, -1);
+			reportTimestamp = cal.getTime();
+			tableHead += "<th " + headStyle + ">" + sdf.format(reportTimestamp) + "</th>";
+			
+			BasicDBList list = (BasicDBList) doc.get("summary");
+			
+			HashMap<Integer, String> dList = new HashMap<Integer, String>();
+			for (Object portalReport : list) {
+				BasicDBObject pr = (BasicDBObject) portalReport;
+				Integer portalId = pr.getInt("portalId");
+				BasicDBObject report = (BasicDBObject) pr.get("report");
+				int listings = report.getInt("listings");
+				
+				Crawler crawler = crawlers.get(portalId);
+				boolean on = crawler.status.equals("1");
+				String def = (on) ? defaultStyle : offStyle;
+				String alarm = (on) ? alarmCellStyle : offStyle;
+				
+				String td = (listings > 0) ? "<td " + def + ">" + listings + "</td>" : "<td " + alarm + ">" + listings + "</td>";
+				dList.put(portalId, td);
+			}
+			
+			for (Integer id : ids) {
+				if (lines.containsKey(id)) {
+					if (dList.containsKey(id)) { 
+						lines.put(id, lines.get(id) + dList.get(id));
+					} else {
+						lines.put(id, lines.get(id) + "<td " + offStyle + ">N/A</td>");
+					}
+				}
+			}
+		}
+		
+		tableHead += "</tr>\n";
+		text += tableHead;
+		Collections.sort(ids);
+		for (Integer id : ids) {
+			if (lines.containsKey(id)) {
+				text += lines.get(id) + "</tr>\n";
+			}
+		}
+		text += "</table>\n";
+		
+		return text;
+	}
+	
+	private static String prepareListings() {
+		String text = null;
+		
+		Iterator<Entry<Integer, Crawler>> it = crawlers.entrySet().iterator();
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		HashMap<Integer, BasicDBObject> listings = new HashMap<Integer, BasicDBObject>();
+		
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		cal.add(Calendar.DATE, -1);
+		Date yesterday = cal.getTime();
+		
+	    while (it.hasNext()) {
+	        @SuppressWarnings("rawtypes")
+			Map.Entry pairs = (Map.Entry) it.next();
+			Integer pid = (Integer) pairs.getKey();
+			
+			ArrayList<BasicDBObject> conditions = new ArrayList<BasicDBObject>();
+			conditions.add(new BasicDBObject("portalId", pid));
+			conditions.add(new BasicDBObject("createdAt", new BasicDBObject("$gte", yesterday)));
+			
+			DBCollection coll = db.getCollection("listings");
+			DBCursor cursor = coll.find(new BasicDBObject("$and", conditions))
+					.sort(new BasicDBObject("createdAt", -1))
+					.limit(1);
+			BasicDBObject listing = (cursor.hasNext()) ? (BasicDBObject) cursor.next() : null;
+			
+			listings.put(pid, listing);
+			
+	        ids.add(pid);
+	    }
+	    
+	    String headStyle = "style=\"border-bottom: 2px solid #404040; border-right: 1px dotted #a0a0a0;\"";
+		String defaultStyle = "style=\"border-bottom: 1px solid #404040; background: #b2ffb2; color: #505050; border-right: 1px dotted #a0a0a0;\"";
+		String offStyle = "style=\"border-bottom: 1px solid #404040; background: #efefef; color: #a0a0a0; border-right: 1px dotted #a0a0a0;\"";
+	    int colspan = 16;
+	    text = "<table cellpadding=\"10\" cellspacing=\"0\" align=\"center\" width=\"100%\">\n";
+		text += "<tr><th align=\"left\" colspan=\"" + colspan + "\" style=\"padding-top: 25px;\"><h2 style=\"color: #808080\">Sample listings</h2></th></tr>";
+		
+		text += "<tr>";
+		text += "<th " + headStyle + ">Name</th>";
+		text += "<th " + headStyle + ">Man</th>";
+		text += "<th " + headStyle + ">Model</th>";
+		text += "<th " + headStyle + ">Year</th>";
+		text += "<th " + headStyle + ">Hrs/Km</th>";
+		text += "<th " + headStyle + ">Cat</th>";
+		text += "<th " + headStyle + ">Price</th>";
+		text += "<th " + headStyle + ">Curr</th>";
+		text += "<th " + headStyle + ">Cntry</th>";
+		text += "<th " + headStyle + ">Reg</th>";
+		text += "<th " + headStyle + ">Zip</th>";
+		text += "<th " + headStyle + ">Serial</th>";
+		text += "<th " + headStyle + ">Date</th>";
+		text += "<th " + headStyle + ">Cmpn</th>";
+		text += "<th " + headStyle + ">New</th>";
+		text += "<th " + headStyle + ">Link</th>";
+		text += "</tr>";
+		
+		Collections.sort(ids);
+		SimpleDateFormat sdf = (SimpleDateFormat) DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.US);
+		sdf.applyPattern("dd.MM.yyyy");
+		String emptyCell = "<td " + offStyle + ">&nbsp;</td>";
+		for (Integer id : ids) {
+			BasicDBObject listing = listings.get(id);
+			String def = crawlers.get(id).status.equals("1") ? defaultStyle : offStyle;
+			if (listing != null) {
+				text += "<tr>";
+				text += "<td " + def + " align=\"right\"><b>" + crawlers.get(id).name + "</b></td>";
+				text += (listings.get(id).getString("manName") != null) ? "<td " + def + ">" + listings.get(id).getString("manName") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("modelName") != null) ? "<td " + def + ">" + listings.get(id).getString("modelName") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("year") != null) ? "<td " + def + ">" + listings.get(id).getString("year") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("counter") != null) ? "<td " + def + ">" + listings.get(id).getString("counter") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("category") != null) ? "<td " + def + ">" + listings.get(id).getString("category") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("price") != null) ? "<td " + def + ">" + listings.get(id).getString("price") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("currency") != null) ? "<td " + def + ">" + listings.get(id).getString("currency") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("country") != null) ? "<td " + def + ">" + listings.get(id).getString("country") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("region") != null) ? "<td " + def + ">" + listings.get(id).getString("region") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("zip") != null) ? "<td " + def + ">" + listings.get(id).getString("zip") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("serial") != null) ? "<td " + def + ">" + listings.get(id).getString("serial") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("date") != null) ? "<td " + def + ">" + sdf.format(listings.get(id).getDate("date")) + "</td>" : emptyCell;
+				text += (listings.get(id).getString("company") != null) ? "<td " + def + ">" + listings.get(id).getString("company") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("new") != null) ? "<td " + def + ">" + listings.get(id).getString("new") + "</td>" : emptyCell;
+				text += (listings.get(id).getString("url") != null) ? "<td " + def + "><a href=\"" + listings.get(id).getString("url") + "\">&rarr;</a></td>" : emptyCell;
+				text += "</tr>";
+			} else {
+				text += "<tr>";
+				text += "<td " + def + " align=\"right\"><b>" + crawlers.get(id).name + "</b></td>";
+				for (int i = 0; i < colspan - 1; i++) {
+					text += emptyCell;
+				}
+				text += "</tr>";
+			}
+		}
+		text += "</table>\n";
+		
 		return text;
 	}
 	
