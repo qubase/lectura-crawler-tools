@@ -183,6 +183,7 @@ public class Crawler {
         time = System.currentTimeMillis() - start;
         String line;
         boolean readOne = false;
+        String response = "";
         while ((line = in.readLine()) != null) {
         	readOne = true;
         	
@@ -202,9 +203,10 @@ public class Crawler {
         		return null;
         	}
         	
-        	parseResponseLine(record, line, separator);
+        	response += line;
         }
         
+        parseResponseLine(record, response, separator);
         
         if (!readOne) {
         	logger.severe("[" + id + "] Nothing to parse. Line empty.");
