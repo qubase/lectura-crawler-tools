@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,8 @@ public class LecturaUploader {
 	private static int insertLength = 0;
 	
 	private static List<?> portals;
+	
+	private static HashMap<String, Integer> houses = new HashMap<String, Integer>();
 	
 	private static String message = null;
 	
@@ -67,6 +70,7 @@ public class LecturaUploader {
 		try {
 			loadCrawlers();
 			if (loadPortals()) {
+				loadAuctionHousesForMarketbook();
 				int size = portals.size();
 				if (size > 0) {
 					
@@ -113,6 +117,21 @@ public class LecturaUploader {
 		System.exit(0);
 	}
 	
+	private static void loadAuctionHousesForMarketbook() {
+		if (db == null) return;
+		
+		DBCollection coll = db.getCollection("houses.marketbook-auction");
+		ArrayList<BasicDBObject> cond = new ArrayList<BasicDBObject>();
+		cond.add(new BasicDBObject("portalId", new BasicDBObject("$exists", true)));
+		cond.add(new BasicDBObject("upload", 1));
+		DBCursor cursor = coll.find(new BasicDBObject("$and", cond));
+		
+		while (cursor.hasNext()) {
+			BasicDBObject d = (BasicDBObject) cursor.next();
+			houses.put(d.getString("house"), d.getInt("portalId"));
+		}
+	}
+
 	private static boolean loadPortals() {
 		if (db == null) return false;
 		
@@ -245,7 +264,17 @@ public class LecturaUploader {
 
 	private static String createValues(DBObject doc, Integer portalId, long importId) {
 		
-		String result = portalId + ",";
+		//hack for marketbook-auction (there are e.g. RB Auctions in it, which in fact has own portal, 
+		//so it's better to inject the id of RB Auctions instead of mb-auction)
+		Integer stepPortalId = null;
+		if (portalId == 800) {
+			String house = (String) doc.get("company");
+			if (houses.containsKey(house)) {
+				stepPortalId = houses.get(house);
+			}
+		}
+		
+		String result = (stepPortalId == null) ? portalId + "," : stepPortalId + ",";
 		result += importId + ",";
 		result += "'" + doc.get("modelName").toString().replaceAll("('|\\\\)", "\\\\$1") + "',";
 		result += "'" + doc.get("manName").toString().replaceAll("('|\\\\)", "\\\\$1") + "',";
