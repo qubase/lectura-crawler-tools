@@ -293,17 +293,15 @@ public class Forklift extends Crawler {
 			
 			if (inTheMainDiv && line.matches(regexAddress)) {
 				String address = line.replaceAll(regexAddress, "$1");
-				String[] addressCrumbs = address.split("<br>", -1);
-				String country = addressCrumbs[addressCrumbs.length - 1].trim();
-				String zipRegion = addressCrumbs[addressCrumbs.length - 2].trim();
-				String zip = zipRegion.replaceAll("^.*?([-A-Z0-9]{2,3})(\\s)?([-A-Z0-9]{2,3})?(\\s?)([A-Z0-9]{2,3})($|\\s.*$)", "$1$2$3$4$5");
-				String region = zipRegion.replaceFirst(zip, "").trim();
+				String country = address.replaceFirst(".*?<span\\s*itemprop=\"addressCountry\">(.*?)</span>.*$", "$1").trim();
+				String zip = address.replaceFirst(".*?<span\\s*itemprop=\"postalCode\">(.*?)</span>.*$", "$1").trim();
+				String region = address.replaceFirst(".*?<span\\s*itemprop=\"addressLocality\">(.*?)</span>.*$", "$1").trim();
+				String company = address.replaceFirst(".*?<span\\s*itemprop=\"name\">(.*?)</span>.*$", "$1").trim();
 				
 				currentListing.setCountry(country);
-				if (!zip.equals(zipRegion)) {
-					currentListing.setZip(zip);
-					currentListing.setRegion(region);
-				}
+				currentListing.setZip(zip);
+				currentListing.setRegion(region);
+				currentListing.setCompany(company);
 			}
 		}
 		
