@@ -104,6 +104,7 @@ public class Forkliftaction extends Crawler {
 		String regexHours = "^.*?<b>Machine hours</b></div><div.*?>([0-9\\.,]+)</div>.*$"; //parse machine hours
 		String regexSerial = "^.*?<b>Serial number</b></div><div.*?>(.+?)</div>.*$"; //parse serial number
 		String regexSubcategory = "^.*?<b>Power / Fuel type</b></div><div.*?>(.+?)</div>.*$"; //parse subcategory
+		String regexCompany = "^.*?<div\\s*style='float:left'\\s*class='microcopybold'>Dealer:</div>.*?<a.*?>(.*?)\\s*</a>.*$"; //parse company
 		
 		String[] lines = input.split(System.getProperty("line.separator"));
 		for (String lineIn : lines) {
@@ -124,6 +125,10 @@ public class Forkliftaction extends Crawler {
 			if (line.matches(regexCurrPrice)) {
 				currentListing.setCurrency(line.replaceAll(regexCurrPrice, "$1"));
 				currentListing.setPrice(line.replaceAll(regexCurrPrice, "$2"));
+			}
+			
+			if (line.matches(regexCompany)) {
+				currentListing.setCompany(line.replaceAll(regexCompany, "$1"));
 			}
 			
 			if (line.matches(regexDate)) {
