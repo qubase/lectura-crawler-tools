@@ -137,7 +137,7 @@ public class Landwirt extends Crawler {
 		String regexZipRegion = ".*<br\\s*/>\\s*([- A-Z0-9]+)\\s+-\\s+(.*?)<.*$";
 		String regexInTel = ".*<span\\s*class=\"telefonnummerdetail\\s*telefonicon\">.*";
 		String regexInCell = ".*<span\\s*class=\"telefonnummerdetail\\s*handyicon\">.*";
-		String regexTelCell = ".*</span>\\s*(\\+[0-9]+)\\s.*";
+		String regexTelCell = ".*\\s*(\\+[0-9]+)\\s.*";
 		String regexCompany = ".*<strong>(.*?)</strong>.*";
 		
 		String regexNew = "<img\\s*src=\"/gebrauchte/cssjs/2.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>";//1 - new
@@ -284,15 +284,15 @@ public class Landwirt extends Crawler {
 			}
 			
 			if (inTel && inAddress) {
-				inTel = false;
 				String tel = line.replaceAll(regexTelCell, "$1");
 				
-				if (tel != null && !tel.isEmpty()) {
+				if (tel != null && !tel.isEmpty() && !tel.equals(line)) {
 					inAddress = false;
+					inTel = false;
 					String country = Dialing.getCountry(tel);
-					if (country != null) {
+					if (country != null && currentListing.getCountry() == null) {
 						currentListing.setCountry(country);
-					}
+					}					
 				}
 			}
 			
@@ -301,13 +301,13 @@ public class Landwirt extends Crawler {
 			}
 			
 			if (inCell && inAddress) {
-				inCell = false;
 				String cell = line.replaceAll(regexTelCell, "$1");
 				
-				if (cell != null && !cell.isEmpty()) {
+				if (cell != null && !cell.isEmpty()  && !cell.equals(line)) {
 					inAddress = false;
+					inCell = false;
 					String country = Dialing.getCountry(cell);
-					if (country != null) {
+					if (country != null && currentListing.getCountry() == null) {
 						currentListing.setCountry(country);
 					}
 				}
