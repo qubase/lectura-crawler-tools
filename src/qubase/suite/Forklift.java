@@ -9,16 +9,16 @@ import java.util.regex.Pattern;
 
 public class Forklift extends Crawler {
 
-	String baseUrl = "http://www.forklift.de/de/endkunde/";
+	String baseUrl = "http://www.forklift-international.com/de/e/";
 	
 	public Forklift() {
 		super();
 		name = "forklift";
 		
 		try {
-			siteMapUrl = new URL("http://www.forklift.de/de/indexstapler.php");
+			siteMapUrl = new URL("http://www.forklift-international.com//de/indexstapler.php");
 		} catch (MalformedURLException e) {
-			logger.severe("Failed to init siteMapUrl: [http://www.forklift.de/de/indexstapler.php] " + e.getMessage());
+			logger.severe("Failed to init siteMapUrl: [http://www.forklift-international.com//de/indexstapler.php] " + e.getMessage());
 		}
 		statusFile = name + ".status";
 	}
@@ -29,7 +29,7 @@ public class Forklift extends Crawler {
 		String[] lines = input.split("\\r?\\n");
 		boolean inSelectBox = false;
 		String optionRegexp = "<option\\s*value=\"([0-9]+),(0)\"\\s*style=\"font-weight:\\s*bold;\">([a-zA-Z0-9]+)</option>";
-		String listLinkReplace = "http://www.forklift.de/de/endkunde/staplersuche3.php?Bauart=$1,$2&sonderbit=0&reifen=*&Fabrikat=alle&antriebsart=*&masttypid=alle&tkvon=0&tkbis=100000&bhvon=0&bhbis=9000&hhvon=0&hhbis=30000&fhvon=0&fhbis=4000&baujahr=0&bjbis=2014&preisvon=0&preisbis=1000000&landid=*&entfernung=0&hatbild=0&numbers=50&page=1";
+		String listLinkReplace = "http://www.forklift-international.com/de/e/staplersuche3.php?Bauart=$1,$2&sonderbit=0&reifen=*&Fabrikat=alle&antriebsart=*&masttypid=alle&tkvon=0&tkbis=100000&bhvon=0&bhbis=9000&hhvon=0&hhbis=30000&fhvon=0&fhbis=4000&baujahr=0&bjbis=2014&preisvon=0&preisbis=1000000&landid=*&entfernung=0&hatbild=0&numbers=50&page=1";
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
 			if (line.matches("<select\\s*name=\"Bauart\"\\s*id=\"Bauart\".*?>")) {
@@ -54,9 +54,9 @@ public class Forklift extends Crawler {
 		//parse cleaning machines
 		input = null;
 		try {
-			input = loadCustomPage(new URL("http://www.forklift.de/de/indexrt.php"));
+			input = loadCustomPage(new URL("http://www.forklift-international.com/de/indexrt.php"));
 		} catch (MalformedURLException e) {
-			logger.severe("Failed to parse URL: http://www.forklift.de/de/indexrt.php");
+			logger.severe("Failed to parse URL: http://www.forklift-international.com/de/indexrt.php");
 		}
 		
 		if (input != null) {
@@ -74,7 +74,7 @@ public class Forklift extends Crawler {
 			        
 			        while (matcher.find()) {
 			        	try {
-							addToSiteMap(new SiteMapLocation(new URL("http://www.forklift.de/de/endkunde/kehr/suche.php?plz=&entfernung=0&Bauart=" 
+							addToSiteMap(new SiteMapLocation(new URL("http://www.forklift-international.com/de/e/kehr/suche.php?plz=&entfernung=0&Bauart=" 
 										+ matcher.group(1) 
 										+ "&Fabrikat=alle&antriebsartid=alle&kbvon=0&kbbis=4000&preisvon=0&preisbis=1000000&landid=*&numbers=50&page=1")
 								, matcher.group(2)));
@@ -95,9 +95,9 @@ public class Forklift extends Crawler {
 		//same code as cleaning machines, different URLs, could be a function, fuck it
 		input = null;
 		try {
-			input = loadCustomPage(new URL("http://www.forklift.de/de/indexbuehne.php"));
+			input = loadCustomPage(new URL("http://www.forklift-international.com/de/indexbuehne.php"));
 		} catch (MalformedURLException e) {
-			logger.severe("Failed to parse URL: http://www.forklift.de/de/indexbuehne.php");
+			logger.severe("Failed to parse URL: http://www.forklift-international.com/de/indexbuehne.php");
 		}
 		
 		if (input != null) {
@@ -116,7 +116,7 @@ public class Forklift extends Crawler {
 				        
 				        while (matcher.find()) {
 				        	try {
-								addToSiteMap(new SiteMapLocation(new URL("http://www.forklift.de/de/endkunde/buehne/suche.php?plz=&entfernung=0&Bauart=" 
+								addToSiteMap(new SiteMapLocation(new URL("http://www.forklift-international.com/de/e/buehne/suche.php?plz=&entfernung=0&Bauart=" 
 											+ matcher.group(1) 
 											+ "&Fabrikat=alle&antriebsartid=alle&ahvon=0&ahbis=80000&klvon=0&klbis=2000&preisvon=0&preisbis=1000000&landid=*&numbers=50&page=1")
 									, matcher.group(2)));
@@ -149,9 +149,9 @@ public class Forklift extends Crawler {
 			if (line.matches(aRegexp)) {
 				String infix = "";
 				String listUrl = status.siteMap.get(status.siteMapIndex).url.toString();
-				if (listUrl.startsWith("http://www.forklift.de/de/endkunde/kehr")) {
+				if (listUrl.startsWith("http://www.forklift-international.com/de/e/kehr")) {
 					infix = "kehr/";
-				} else if (listUrl.startsWith("http://www.forklift.de/de/endkunde/buehne")) {
+				} else if (listUrl.startsWith("http://www.forklift-international.com/de/e/buehne")) {
 					infix = "buehne/";
 				}
 				
@@ -163,6 +163,7 @@ public class Forklift extends Crawler {
 				}
 			}
 		}
+		System.out.println();
 	}
 
 	@Override
