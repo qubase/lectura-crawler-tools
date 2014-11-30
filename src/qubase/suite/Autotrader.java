@@ -7,21 +7,25 @@ import java.util.Date;
 
 public class Autotrader extends Crawler {
 	
+	private URL siteMapUrlPlant;
+	
 	public Autotrader() {
 		super();
 		name = "autotrader";
 		
 		try {
 			siteMapUrl = new URL("http://farm.autotrader.co.uk/search");
+			siteMapUrlPlant = new URL("http://plant.autotrader.co.uk/search");
 		} catch (MalformedURLException e) {
-			logger.severe("Failed to init siteMapUrl: [http://farm.autotrader.co.uk/search] " + e.getMessage());
+			logger.severe("Failed to init siteMapUrl: [http://farm.autotrader.co.uk/search] or [http://plant.autotrader.co.uk/search] " + e.getMessage());
 		}
 		statusFile = name + ".status";
 	}
 
 	@Override
 	protected void parseSiteMap(String input) {
-		 status.siteMap.add(new SiteMapLocation(siteMapUrl, "Search"));
+		 status.siteMap.add(new SiteMapLocation(siteMapUrl, "Farm"));
+		 status.siteMap.add(new SiteMapLocation(siteMapUrlPlant, "Plant"));
 	}
 
 	@Override
@@ -62,12 +66,13 @@ public class Autotrader extends Crawler {
 		
 		String[] lines = input.split("\\r?\\n");
 		
-		String regexInBreadCrumbs = "<a\\s*href=\".*?\">Used\\sFarm\\sMachinery</a>\\s*&gt;";
+		String regexInBreadCrumbs = "<a\\s*href=\".*?\">Used\\s(Farm|Plant)\\sMachinery</a>\\s*&gt;";
 		String regexInAdvert = "<div\\s*class=\"advertInfo\">";
 		String regexManufacturer = "<a href=\".*?\">(.*?)</a>\\s*&gt;";
 		String regexPrice = "<div>&pound;([,\\.0-9]+)(\\s\\+VAT)?</div>";
 		String regexPriceEur = "<div\\s*class=\"priceEur\">&euro;([,\\.0-9]+)</div>";
 		String regexInPrice = "<div\\s*class=\"price\">";
+		String regexInCompany = ".*?<span\\s*class=\"seller\">Trade Seller:</span>.*$";
 		
 		String manufacturer = null;
 		String category = null;
@@ -76,8 +81,10 @@ public class Autotrader extends Crawler {
 		boolean inInfo = false;
 		boolean nextLiIsFirst = false;
 		boolean inPrice = false;
+		boolean inCompany = false;
 		
 		for (int i = 0; i < lines.length; i++) {
+			
 			String line = lines[i].trim();
 			
 			//model + brand
@@ -96,6 +103,21 @@ public class Autotrader extends Crawler {
 			
 			if (line.matches(regexInBreadCrumbs)) {
 					inBreadCrumbs = true;
+			}
+			
+			//company
+			if (inCompany) {
+				String company = line.trim();
+				if (company != null && !company.isEmpty()) {
+					currentListing.setCompany(company);
+				}
+				inCompany = false;
+				continue;
+			}
+			
+			if (line.matches(regexInCompany)) {
+				inCompany = true;
+				continue;
 			}
 			
 			//price
@@ -119,27 +141,30 @@ public class Autotrader extends Crawler {
 					inPrice = false;
 					i++;
 				}
-				continue;
 			}
 			
-			if (inPrice && line.matches("</div>")) {
+			if (inPrice && line.matches("^\\s*</div>\\s*$")) {
 				inPrice = false;
+				continue;
 			}
 			
 			if (line.matches(regexInPrice)) {
 				inPrice = true;
+				continue;
 			}
 			
 			//category + year + hrs
-			if (line.matches("<div\\s*class=\"clear\"></div>") && inInfo) {
+			if (line.matches("<div\\s*class=\"clear\"></div>$") && inInfo) {
 				inInfo = false;
+				continue;
 			}
 			
-			if (line.matches("<ul>")) {
+			if (line.matches("<ul>") && inInfo) {
 				nextLiIsFirst = true;
+				continue;
 			}
 			
-			if (line.matches("<li>.*</li>")) {
+			if (line.matches("<li>.*</li>") && inInfo) {
 				String val = line.replaceAll("<li>(.*)</li>", "$1");
 				boolean valAccepted = false;
 				if (val.matches("[0-9]{4}")) {
@@ -163,6 +188,7 @@ public class Autotrader extends Crawler {
 			
 			if (line.matches(regexInAdvert)) {
 				inInfo = true;
+				continue;
 			}
 			
 			//region
