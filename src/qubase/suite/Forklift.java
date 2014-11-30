@@ -16,9 +16,9 @@ public class Forklift extends Crawler {
 		name = "forklift";
 		
 		try {
-			siteMapUrl = new URL("http://www.forklift-international.com//de/indexstapler.php");
+			siteMapUrl = new URL("http://www.forklift-international.com/de/indexstapler.php");
 		} catch (MalformedURLException e) {
-			logger.severe("Failed to init siteMapUrl: [http://www.forklift-international.com//de/indexstapler.php] " + e.getMessage());
+			logger.severe("Failed to init siteMapUrl: [http://www.forklift-international.com/de/indexstapler.php] " + e.getMessage());
 		}
 		statusFile = name + ".status";
 	}
