@@ -66,9 +66,9 @@ public class Autotrader extends Crawler {
 		
 		String[] lines = input.split("\\r?\\n");
 		
-		String regexInBreadCrumbs = "<a\\s*href=\".*?\">Used\\s(Farm|Plant)\\sMachinery</a>\\s*&gt;";
+		String regexInBreadCrumbs = "<a\\s*href=\".*?\">Used\\s(Farm|Plant)\\sMachinery</a>\\s*/";
 		String regexInAdvert = "<div\\s*class=\"advertInfo\">";
-		String regexManufacturer = "<a href=\".*?\">(.*?)</a>\\s*&gt;";
+		String regexManufacturer = "<a href=\".*?\">(.*?)</a>\\s*/\\s*";
 		String regexPrice = "<div>&pound;([,\\.0-9]+)(\\s\\+VAT)?</div>";
 		String regexPriceEur = "<div\\s*class=\"priceEur\">&euro;([,\\.0-9]+)</div>";
 		String regexInPrice = "<div\\s*class=\"price\">";
