@@ -63,9 +63,9 @@ public class LecturaCrawlerSuite {
 		server.setExecutor(null); // creates a default executor
 		server.start();
 		
-//		Landwirt b = new Landwirt();
+//		Resaleweekly b = new Resaleweekly();
 //		//b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
-//		b.testListing(new URL("http://www.landwirt.com/gebrauchte,1264662,Renault-Ares-696-RZ.html"));
+//		b.testListing(new URL("http://www.resaleweekly.com/doosan-dx225lc-210492.html"));
 //		System.exit(0);
 	}
 	
