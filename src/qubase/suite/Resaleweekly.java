@@ -98,9 +98,14 @@ public class Resaleweekly extends Crawler {
 		boolean inHours = false;
 		String regexSerial = "<strong>Serial\\sNumber</strong>.*";
 		boolean inSerial = false;
-		String regexAddress = "(.*?)<div\\sclass=\"mt5\"><strong>Postcode:\\s</strong>(.*?)</div><div\\sclass=\"mt5\"><strong>Country:\\s</strong>(.*?)</div>";
+		String regexAddress = "^.*?<div\\sclass=\"mt5\"><strong>.*?</strong>.*?</div>.*$";
+		String regexRegion = "^(.*?)<div\\sclass=\"mt5\">.*$";
+		String regexZip = "^.*?<div\\sclass=\"mt5\"><strong>Postcode:\\s</strong>(.*?)</div>.*$";
+		String regexCountry = "^.*?<div\\sclass=\"mt5\"><strong>Country:\\s</strong>(.*?)</div>.*$";
 		String regexCondition = "<strong>Condition:\\s</strong>";
 		boolean inCondition = false;
+		String regexPurchaseType = "<strong>Purchase\\sType:\\s</strong>";
+		boolean inPurchaseType = false;
 		
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
@@ -129,7 +134,10 @@ public class Resaleweekly extends Crawler {
 				if (!price.startsWith("Call")) {
 					currentListing.setPrice(price.replaceFirst("^([0-9,]+)(\\.[0-9]{2})?.*$", "$1"));
 					if (currentListing.getPrice() != null && !currentListing.getPrice().isEmpty()) {
-						currentListing.setCurrency(price.replaceFirst("^.*?\\s([A-Z]{2,4})$", "$1"));
+						String curr = price.replaceFirst("^.*?\\s([A-Z]{2,4})$", "$1");
+						if (curr.matches("[A-Z]{2,4}")) {
+							currentListing.setCurrency(curr);
+						}
 					} else if (currentListing.getPrice().isEmpty()) {
 						currentListing.setPrice(null);
 					}
@@ -169,7 +177,7 @@ public class Resaleweekly extends Crawler {
 			
 			if (inYear) {
 				String year = line.replaceFirst("<span\\sclass=\"data\">(.*?)</span>", "$1");
-				if (!year.equals("N/A")) {
+				if (!year.equals("N/A") && !year.equals("Unknown")) {
 					currentListing.setYear(year);
 				}
 				inYear = false;
@@ -181,7 +189,7 @@ public class Resaleweekly extends Crawler {
 			
 			if (inHours) {
 				String hours = line.replaceFirst("<span\\sclass=\"data\">(.*?)</span>", "$1");
-				if (!hours.equals("N/A")) {
+				if (!hours.equals("N/A") && !hours.equals("Unknown") && !hours.equals("0")) {
 					currentListing.setCounter(hours);
 				}
 				inHours = false;
@@ -193,7 +201,7 @@ public class Resaleweekly extends Crawler {
 			
 			if (inSerial) {
 				String serial = line.replaceFirst("<span\\sclass=\"data\">(.*?)</span>", "$1");
-				if (!serial.equals("N/A")) {
+				if (!serial.equals("N/A") && !serial.equals("Unknown")) {
 					currentListing.setSerial(serial);
 				}
 				inSerial = false;
@@ -204,9 +212,9 @@ public class Resaleweekly extends Crawler {
 			}
 			
 			if (line.matches(regexAddress)) {
-				String region = line.replaceFirst(regexAddress, "$1");
-				String zip = line.replaceFirst(regexAddress, "$2");
-				String country = line.replaceFirst(regexAddress, "$3");
+				String region = line.replaceFirst(regexRegion, "$1");
+				String zip = line.replaceFirst(regexZip, "$1");
+				String country = line.replaceFirst(regexCountry, "$1");
 				
 				if (region != null && !region.isEmpty()) {
 					currentListing.setRegion(region);
@@ -223,12 +231,29 @@ public class Resaleweekly extends Crawler {
 			
 			if (inCondition) {
 				String condition = line.replaceFirst("\\s*(.*?)\\s*</p>", "$1");
-				currentListing.setNewMachine(condition);
+				if (condition.equals("New")) {
+					currentListing.setNewMachine("1");
+				}
 				inCondition = false;
 			}
 			
 			if (line.matches(regexCondition)) {
 				inCondition = true;
+			}
+			
+			if (inPurchaseType) {
+				String pt = line.replaceFirst("\\s*(.*?)\\s*</p>", "$1");
+				// this is most likely an unfinished auction, remove model name to not to save the record
+				if (pt.equals("Auction")) {
+					currentListing.setManName("This is an auction");
+					currentListing.setModelName(null);
+					break;
+				}
+				inCondition = false;
+			}
+			
+			if (line.matches(regexPurchaseType)) {
+				inPurchaseType = true;
 			}
 		}
 	}
