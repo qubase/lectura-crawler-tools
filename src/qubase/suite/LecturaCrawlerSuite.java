@@ -65,7 +65,7 @@ public class LecturaCrawlerSuite {
 		
 //		Resaleweekly b = new Resaleweekly();
 //		//b.testList(new URL("http://www.bau-portal.com/gebraucht/a-Zubehoer-Ausruestung-und-Anbaugeraete/37/b-Tiefloeffel/662/netgross/1/page/2/sort/ASC/sortby/price/"));
-//		b.testListing(new URL("http://www.resaleweekly.com/doosan-dx225lc-210492.html"));
+//		b.testListing(new URL("http://www.resaleweekly.com/manitou-m26-4-449393.html"));
 //		System.exit(0);
 	}
 	
