@@ -138,7 +138,7 @@ public class Forklift extends Crawler {
 	@Override
 	protected void parseList(String input) {
 		String[] lines = input.split("\\r?\\n");
-		String aRegexp = "<div\\s*class=\"makeBig\"><a\\s*href=\"(cgi/)?([^\"]+)\">(.*?)</a></div>";
+		String aRegexp = "<div\\s*class=\"makeSmall\"><a\\s*href=\"(cgi/)?([^\"]+)\">(.*?)</a></div>";
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
 			String nextRegex = "^.*<a\\s*class=\"pfeilRechts\".*$";
@@ -163,7 +163,6 @@ public class Forklift extends Crawler {
 				}
 			}
 		}
-		System.out.println();
 	}
 
 	@Override
