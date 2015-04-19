@@ -137,7 +137,7 @@ public class LecturaUploader {
 		
 		DBCollection coll = db.getCollection("listings");
 		//TODO remove the portalId condition
-		portals = coll.distinct("portalId", new BasicDBObject("todo", 1)/*.append("portalId", 675)*/);
+		portals = coll.distinct("portalId", new BasicDBObject("todo", 1)/*.append("portalId", 685)*/);
 		
 		return portals != null;
 	}
@@ -309,7 +309,9 @@ public class LecturaUploader {
 				result += "'new'";
 			} else if (doc.get("new").equals(2)) {
 				result += "'show'";
-			} 
+			} else {
+				result += "'used'";
+			}
 		} else {
 			result += "'used'";
 		}
