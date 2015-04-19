@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 
 public class Resaleweekly extends Crawler {
 	
-	private String baseUrl = null;
+//	private String baseUrl = null;
 	
 	public Resaleweekly() {
 		super();
@@ -24,7 +24,7 @@ public class Resaleweekly extends Crawler {
 			logger.severe("Failed to init siteMapUrl: [http://www.resaleweekly.com] " + e.getMessage());
 		}
 		statusFile = name + ".status";
-		baseUrl = "http://www.resaleweekly.com";
+//		baseUrl = "http://www.resaleweekly.com";
 	}
 
 	@Override
@@ -32,13 +32,12 @@ public class Resaleweekly extends Crawler {
 		String[] lines = input.split("\\r?\\n");
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
-			if (line.matches("^.*?<select.*?name=\"manufacturer\">.*$")) {
-				String options = line.replaceFirst(".*?<select.*?name=\"manufacturer\">(.*?)</select>.*$", "$1");
-				Pattern pattern = Pattern.compile("<option\\svalue=\"([0-9]+)\">(.*?)</option>");
-				Matcher matcher = pattern.matcher(options);
+			if (line.matches("^.*?<div\\s*class='firstCategory'><span\\s*class=\"categoryName\">.*$")) {
+				Pattern pattern = Pattern.compile("<div\\s*class='firstCategory'><span\\s*class=\"categoryName\"><a\\s*href=\"(.*?)\">(.*?)</a>");
+				Matcher matcher = pattern.matcher(line);
 		        
 		        while (matcher.find()) {
-		        	String listLink = siteMapUrl + "/catalogsearch/advanced/result/?hours=&manufacturer=" + matcher.group(1) + "&model_value=&price=&year=";
+		        	String listLink = siteMapUrl + matcher.group(1);
 		        	try {
 						addToSiteMap(new SiteMapLocation(new URL(listLink), matcher.group(2)));
 					} catch (MalformedURLException e) {
@@ -52,7 +51,7 @@ public class Resaleweekly extends Crawler {
 	@Override
 	protected void parseList(String input) {
 		String[] lines = input.split("\\r?\\n");
-		String aRegex = "<a href=\"([^\"]{2,})\".*?product-id=\"[0-9]+\"\\s*>";
+		String aRegex = "<a\\s*class=\"dark-text\"\\s*href=\"(.*?)\"\\s*title=\".*?\">";
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
 			if (line.matches(aRegex)) {
@@ -64,7 +63,7 @@ public class Resaleweekly extends Crawler {
 				}
 			}
 			
-			if (line.matches(".*nextpage\\.png.*")) {
+			if (line.matches(".*aria-label=\"Next\".*")) {
 				status.nextPageAvailable = true;
 			}
 		}
@@ -80,57 +79,76 @@ public class Resaleweekly extends Crawler {
 			//ignore, this is a test call
 		}
 		
-		currentListing.setManName(status.siteMap.get(status.siteMapIndex).name);
-		currentListing.setCategory("Unknown");
+		currentListing.setCategory(status.siteMap.get(status.siteMapIndex).name);
 		currentListing.setCatLang("EN");
+		currentListing.setDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 		
 		String[] lines = input.split("\\r?\\n");
 		
-		String regexCompanyInfo = "<a.*?id=\"companyinfo[0-9]+\".*?>";
-		boolean inCompanyInfo = false;
-		String regexPrice = "<span\\sclass=\"price\">";
-		boolean inPrice = false;
-		String regexDate = "<strong>Listed\\sdate:\\s*</strong>";
-		boolean inDate = false;
-		String regexYear = "<strong>Year</strong>.*";
+		String regexMake = "<td\\s*class=\"name\">Make</td>";
+		boolean inMake = false;
+		String regexModel = "<td\\s*class=\"name\">Model</td>";
+		boolean inModel = false;
+		String regexPrice = "<span class=\"price\">(.*?)</span>";
+		String regexYear = "<td\\s*class=\"name\">Year</td>";
 		boolean inYear = false;
-		String regexHours = "<strong>Hours</strong>.*";
+		String regexHours = "<td\\s*class=\"name\">Hours</td>";
 		boolean inHours = false;
-		String regexSerial = "<strong>Serial\\sNumber</strong>.*";
+		String regexSerial = "<td\\s*class=\"name\">Serial\\sNumber</td>";
 		boolean inSerial = false;
-		String regexAddress = "^.*?<div\\sclass=\"mt5\"><strong>.*?</strong>.*?</div>.*$";
-		String regexRegion = "^(.*?)<div\\sclass=\"mt5\">.*$";
-		String regexZip = "^.*?<div\\sclass=\"mt5\"><strong>Postcode:\\s</strong>(.*?)</div>.*$";
-		String regexCountry = "^.*?<div\\sclass=\"mt5\"><strong>Country:\\s</strong>(.*?)</div>.*$";
-		String regexCondition = "<strong>Condition:\\s</strong>";
+		String regexAddress = "<td>Location</td>";
+		boolean inAddress = false;
+		String regexCondition = "<td>Condition</td>";
 		boolean inCondition = false;
-		String regexPurchaseType = "<strong>Purchase\\sType:\\s</strong>";
+		String regexCompany = "<div\\s*class=\"contactTheSeller.*?\">(.*?)</div>";
+		String regexPurchaseType = "<td>Purchase\\sType</td>";
 		boolean inPurchaseType = false;
+		String regexTitle = "<title>(.*?)</title>";
+		String title = null;
 		
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
 			
-			//model name
-			if (line.matches("<title>.*</title>")) {
-				String title = line.replaceFirst("<title>Used\\s(.*?)\\sfor\\ssale.*?</title>", "$1");
-				String man = currentListing.getManName();
-				if (title.toLowerCase().startsWith(man.toLowerCase())) {
-					String model = title.substring(man.length()).trim();
-					currentListing.setModelName(model);
+			if (line.matches(regexTitle)) {
+				title = line.replaceFirst(regexTitle, "$1");
+			}
+			
+			if (inMake) {
+				String make = line.replaceFirst("<td>(.*?)</td>", "$1");
+				if (!make.equals("N/A") && !make.equals("Unknown") && !make.isEmpty()) {
+					currentListing.setManName(make);
 				}
+				inMake = false;
 			}
 			
-			if (inCompanyInfo) {
-				currentListing.setCompany(line.replaceFirst("^\\s*(.*?)\\s*</a>$", "$1"));
-				inCompanyInfo = false;
+			if (line.matches(regexMake)) {
+				inMake = true;
 			}
 			
-			if (line.matches(regexCompanyInfo)) {
-				inCompanyInfo = true;
+			if (inModel) {
+				String model = line.replaceFirst("<td>(.*?)</td>", "$1");
+				if (!model.equals("N/A") && !model.equals("Unknown") && !model.isEmpty()) {
+					currentListing.setModelName(model);
+				} else if (model.isEmpty() && currentListing.getManName() != null) {
+					// get it from title, some bug on resaleweekly side, no model in Model property but available in the title
+					model = title.substring(currentListing.getManName().length() + 5).replaceFirst("(.*?)\\sfor\\ssale.*", "$1");
+					if (!model.isEmpty()) {
+						currentListing.setModelName(model);
+					}
+				}
+				inModel = false;
 			}
 			
-			if (inPrice) {
-				String price = line.replaceFirst("^\\s*(.*?)\\s*</span>$", "$1");
+			if (line.matches(regexModel)) {
+				inModel = true;
+			}
+			
+			if (line.matches(regexCompany)) {
+				currentListing.setCompany(line.replaceFirst(regexCompany, "$1"));
+			}
+			
+			if (line.matches(regexPrice)) {
+				String price = line.replaceFirst(regexPrice, "$1");
 				if (!price.startsWith("Call")) {
 					currentListing.setPrice(price.replaceFirst("^([0-9,]+)(\\.[0-9]{2})?.*$", "$1"));
 					if (currentListing.getPrice() != null && !currentListing.getPrice().isEmpty()) {
@@ -142,42 +160,11 @@ public class Resaleweekly extends Crawler {
 						currentListing.setPrice(null);
 					}
 				}
-				inPrice = false;
-			}
-			
-			if (line.matches(regexPrice)) {
-				inPrice = true;
-			}
-			
-			if (inDate) {
-				String reg = "([0-9]{1,2})(th|st|rd)\\s([^0-9]{3})[^0-9]+\\s([0-9]{4}).*</span>";
-				if (line.matches(reg)) {
-					String dateStr = line.replaceFirst(reg, "$1 $3 $4");
-					if (dateStr.matches("[0-9]\\s.*")) {
-						dateStr = "0" + dateStr;
-					}
-					DateFormat dffrom = new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH);
-					try {
-						Date res = dffrom.parse(dateStr);
-						currentListing.setDate(new SimpleDateFormat("yyyy-MM-dd").format(res));
-					} catch (ParseException e) {
-						e.printStackTrace();
-					}
-					inDate = false;
-					if (currentListing.getDate() == null) {
-						currentListing.setDate(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
-						inDate = false;
-					}
-				}
-			}
-			
-			if (line.matches(regexDate)) {
-				inDate = true;
 			}
 			
 			if (inYear) {
-				String year = line.replaceFirst("<span\\sclass=\"data\">(.*?)</span>", "$1");
-				if (!year.equals("N/A") && !year.equals("Unknown")) {
+				String year = line.replaceFirst("<td>(.*?)</td>", "$1");
+				if (!year.equals("N/A") && !year.equals("Unknown") && !year.isEmpty()) {
 					currentListing.setYear(year);
 				}
 				inYear = false;
@@ -188,8 +175,8 @@ public class Resaleweekly extends Crawler {
 			}
 			
 			if (inHours) {
-				String hours = line.replaceFirst("<span\\sclass=\"data\">(.*?)</span>", "$1");
-				if (!hours.equals("N/A") && !hours.equals("Unknown") && !hours.equals("0")) {
+				String hours = line.replaceFirst("<td>(.*?)</td>", "$1");
+				if (!hours.equals("N/A") && !hours.equals("Unknown") && !hours.equals("0") && !hours.isEmpty()) {
 					currentListing.setCounter(hours);
 				}
 				inHours = false;
@@ -200,8 +187,8 @@ public class Resaleweekly extends Crawler {
 			}
 			
 			if (inSerial) {
-				String serial = line.replaceFirst("<span\\sclass=\"data\">(.*?)</span>", "$1");
-				if (!serial.equals("N/A") && !serial.equals("Unknown")) {
+				String serial = line.replaceFirst("<td>(.*?)</td>", "$1");
+				if (!serial.equals("N/A") && !serial.equals("Unknown") && !serial.isEmpty()) {
 					currentListing.setSerial(serial);
 				}
 				inSerial = false;
@@ -211,26 +198,52 @@ public class Resaleweekly extends Crawler {
 				inSerial = true;
 			}
 			
-			if (line.matches(regexAddress)) {
-				String region = line.replaceFirst(regexRegion, "$1");
-				String zip = line.replaceFirst(regexZip, "$1");
-				String country = line.replaceFirst(regexCountry, "$1");
+			if (inAddress && !line.equals("<td>")) {
+				String normalizedAddr = line.replaceAll("<br/>", " ").replaceFirst("\\s*</td>", "");
+				String[] crumbs = normalizedAddr.split(", ");
+				String country = null;
+				if (crumbs.length > 0) {
+					country = crumbs[0];
+				}
+				String region = "";
+				String zip = null;
+				if (crumbs.length > 1) {
+					String delim = "";
+					for (int i = 1; i < crumbs.length; i++) {
+						if (i == crumbs.length - 1) {
+							if (crumbs[i].matches("[-A-Z0-9]{2,3}\\s?([-A-Z0-9]{2,3})?\\s?[A-Z0-9]{2,3}")) {
+								zip = crumbs[i];
+							} else {
+								region += delim + crumbs[i];
+							}
+						} else {
+							region += delim + crumbs[i];
+						}
+						delim = ", ";
+					}
+				}
 				
-				if (region != null && !region.isEmpty()) {
+				if (country != null) {
+					currentListing.setCountry(country);
+				}
+				
+				if (!region.isEmpty()) {
 					currentListing.setRegion(region);
 				}
 				
-				if (zip != null && !zip.isEmpty()) {
+				if (zip != null) {
 					currentListing.setZip(zip);
 				}
 				
-				if (country != null && !country.isEmpty()) {
-					currentListing.setCountry(country);
-				}
+				inAddress = false;
+			}
+			
+			if (line.matches(regexAddress)) {
+				inAddress = true;
 			}
 			
 			if (inCondition) {
-				String condition = line.replaceFirst("\\s*(.*?)\\s*</p>", "$1");
+				String condition = line.replaceFirst("<td>(.*?)</td>", "$1");
 				if (condition.equals("New")) {
 					currentListing.setNewMachine("1");
 				}
@@ -242,14 +255,14 @@ public class Resaleweekly extends Crawler {
 			}
 			
 			if (inPurchaseType) {
-				String pt = line.replaceFirst("\\s*(.*?)\\s*</p>", "$1");
+				String pt = line.replaceFirst("<td>(.*?)</td>", "$1");
 				// this is most likely an unfinished auction, remove model name to not to save the record
 				if (pt.equals("Auction")) {
 					currentListing.setManName("This is an auction");
 					currentListing.setModelName(null);
 					break;
 				}
-				inCondition = false;
+				inPurchaseType = false;
 			}
 			
 			if (line.matches(regexPurchaseType)) {
@@ -261,9 +274,9 @@ public class Resaleweekly extends Crawler {
 	@Override
 	protected URL modifyUrl(URL originalUrl) {
 		try {
-			return new URL(originalUrl + "&p=" + status.page);
+			return new URL(originalUrl + "?p=" + status.page);
 		} catch (MalformedURLException e) {
-			logger.severe("Failed to modify URL: " + originalUrl + "&p=" + status.page + " | " + e.getMessage());
+			logger.severe("Failed to modify URL: " + originalUrl + "?p=" + status.page + " | " + e.getMessage());
 			return null;
 		}
 	}
