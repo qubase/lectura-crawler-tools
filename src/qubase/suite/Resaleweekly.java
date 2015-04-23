@@ -161,7 +161,7 @@ public class Resaleweekly extends Crawler {
 			
 			if (inYear) {
 				String year = line.replaceFirst("<td>(.*?)</td>", "$1");
-				if (!year.equals("N/A") && !year.equals("Unknown") && !year.isEmpty()) {
+				if (!year.equals("N/A") && !year.equals("Unknown") && !year.isEmpty() && !year.equals("0") && year.length() != 4) {
 					currentListing.setYear(year);
 				}
 				inYear = false;
@@ -185,7 +185,7 @@ public class Resaleweekly extends Crawler {
 			
 			if (inSerial) {
 				String serial = line.replaceFirst("<td>(.*?)</td>", "$1");
-				if (!serial.equals("N/A") && !serial.equals("Unknown") && !serial.isEmpty()) {
+				if (!serial.equals("N/A") && !serial.equals("Unknown") && !serial.isEmpty() && !serial.equals("0")) {
 					currentListing.setSerial(serial);
 				}
 				inSerial = false;
@@ -210,7 +210,7 @@ public class Resaleweekly extends Crawler {
 						if (i == crumbs.length - 1) {
 							if (crumbs[i].matches("[-A-Z0-9]{2,3}\\s?([-A-Z0-9]{2,3})?\\s?[A-Z0-9]{2,3}")) {
 								zip = crumbs[i];
-							} else {
+							} else if (!crumbs[i].equals("0") && !crumbs[i].equals("??") && !crumbs[i].isEmpty()) {
 								region += delim + crumbs[i];
 							}
 						} else {
