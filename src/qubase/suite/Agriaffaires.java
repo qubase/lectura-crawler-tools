@@ -38,7 +38,9 @@ public class Agriaffaires extends Crawler {
 			if (line.matches(regexLvl1Link)) {
 				try {
 					URL level1url = new URL(siteMapUrl + line.replaceFirst(regexLvl1Link, "$1").replaceFirst("/", ""));
-					
+					if (blacklist.contains(level1url)) {
+						continue;
+					}
 					traverse(level1url, null);
 					personalBlacklist.clear();//this was needed only for traversing, clear it for the next traversing
 				} catch (MalformedURLException e) {
