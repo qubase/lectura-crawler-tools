@@ -161,7 +161,7 @@ public class Resaleweekly extends Crawler {
 			
 			if (inYear) {
 				String year = line.replaceFirst("<td>(.*?)</td>", "$1");
-				if (!year.equals("N/A") && !year.equals("Unknown") && !year.isEmpty() && !year.equals("0") && year.length() != 4) {
+				if (!year.equals("N/A") && !year.equals("Unknown") && !year.isEmpty() && !year.equals("0") && year.length() == 4) {
 					currentListing.setYear(year);
 				}
 				inYear = false;
