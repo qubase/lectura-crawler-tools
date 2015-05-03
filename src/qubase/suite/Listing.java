@@ -1,5 +1,7 @@
 package qubase.suite;
 
+import java.util.Calendar;
+
 public class Listing {
 	private String modelName = null;
 	private String manName = null;
@@ -55,7 +57,15 @@ public class Listing {
 		return year;
 	}
 	public void setYear(String year) {
-		this.year = year;
+		try {
+			Calendar now = Calendar.getInstance();
+			int y = now.get(Calendar.YEAR);
+			if (Integer.parseInt(year) <= y) {
+				this.year = year;
+			}
+		} catch (Exception e) {
+			//ignore
+		}
 	}
 	public String getCounter() {
 		return counter;
