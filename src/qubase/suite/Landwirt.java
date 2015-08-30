@@ -119,20 +119,19 @@ public class Landwirt extends Crawler {
 		
 		String[] lines = input.split("\\r?\\n");
 		
-		boolean inHI = false;
 		boolean inAddress = false;
-		boolean inTitle = false;
 		boolean inTel = false;
 		boolean inCell = false;
 		
+		boolean inType = false;
+		boolean inOH = false;
+		boolean inYear = false;
+		boolean inPrice = false;
+		
 		String title = null;
 		
-		String regexTitleStart = "<a\\s*href=\"[^\"]+\"><h1>.*";
-		String regexTitleEnd = ".*</h1></a>";
-		String regexType = ".*<strong>Type:</strong>\\s*(.*?)\\s*$";
-		String regexOpHrs = ".*<strong>Betriebsstunden:</strong>\\s*(.*?)\\s*$";
-		String regexYear = ".*<strong>Baujahr:</strong>\\s*(.*?)\\s*$";
-		String regexPriceCurrencyVAT = ".*<strong>Preis:\\s*([A-Z]{1,4})\\s*([\\.0-9]+),--</strong>.*$";
+		String regexTitle = ".*<h1\\s*class=\"detailMainHeader\">(.*?)<div\\s*class=\"h5\".*$";
+		String regexPriceCurrency = ".*<strong>Preis:\\s*([A-Z]{1,4})\\s*([\\.0-9]+),--</strong>.*$";
 		String regexInAddress = ".*\\s*<address>\\s*.*";
 		String regexZipRegion = ".*<br\\s*/>\\s*([- A-Z0-9]+)\\s+-\\s+(.*?)<.*$";
 		String regexInTel = ".*<span\\s*class=\"telefonnummerdetail\\s*telefonicon\">.*";
@@ -140,8 +139,8 @@ public class Landwirt extends Crawler {
 		String regexTelCell = ".*\\s*(\\+[0-9]+)\\s.*";
 		String regexCompany = ".*<strong>(.*?)</strong>.*";
 		
-		String regexNew = "<img\\s*src=\"/gebrauchte/cssjs/2.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>";//1 - new
-		String regexShow = "<img\\s*src=\"/gebrauchte/cssjs/1.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>";//2 - show
+		String regexNew = ".*<img\\s*src=\"/gebrauchte/cssjs/2.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>.*";//1 - new
+		String regexShow = ".*<img\\s*src=\"/gebrauchte/cssjs/1.gif\"\\s*class=\"floatLeft\"\\s*alt=\"\"\\s*/>.*";//2 - show
 		
 		boolean zipRegionDone = false;
 		boolean statusDone = false;
@@ -149,80 +148,71 @@ public class Landwirt extends Crawler {
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
 			
-			if (line.matches("<div\\s*id=\"headerinnen\">")) {
-				inHI = true;
+			if (line.matches(regexTitle)) {
+				title = line.replaceFirst(regexTitle, "$1");
 			}
 			
-			if (inTitle && !line.matches(regexTitleEnd)) {
-				if (title != null) {
-					title += line;
+			//model name			
+			if (inType) {
+				String value = line.replaceAll(".*<div\\s*class=\"col-xs-7\">(.*?)</div>.*$", "$1");
+				if (value != null && !value.isEmpty()) {
+					currentListing.setModelName(value);
+					if (title != null) {
+						String manName = title.substring(0,  title.length() - (value.length() + 1));
+						currentListing.setManName(manName);
+					}
 				}
+				inType = false;
 			}
 			
-			if (line.matches(regexTitleEnd) && inHI) {
-				if (title != null) {
-					title += line;
-				} else {
-					title = line;
-				}
-				inTitle = false;
-				inHI = false;
-				
-				title = title.replaceAll("<a\\s*href=\"[^\"]+\"><h1>(.*?)(<div\\s*class=\"h5\".*?</div>)?</h1></a>", "$1");
-			}
-			
-			if (line.matches(regexTitleStart) && inHI) {
-				title = line;
-				inTitle = true;
-			}
-			
-			//model name + manufacturer
-			if (line.matches(regexType)) {
-				String modelName = line.replaceAll(regexType, "$1");
-				if (!modelName.isEmpty() && !title.isEmpty()) {
-					currentListing.setModelName(modelName);
-					currentListing.setManName(title.replace(modelName, "").trim());
-				}
+
+			if (line.matches(".*<div\\s*class=\"col-xs-5\">Type:</div>.*$")) {
+				inType = true;
 			}
 			
 			//op hrs
-			if (line.matches(regexOpHrs)) {
-				String opHrs = line.replaceAll(regexOpHrs, "$1");
-				if (!opHrs.isEmpty()) {
-					currentListing.setCounter(opHrs);
+			if (inOH) {
+				String value = line.replaceAll(".*<div\\s*class=\"col-xs-7\">([0-9]*?)</div>.*$", "$1");
+				if (value != null && !value.isEmpty()) {
+					currentListing.setCounter(value);
 				}
+				inOH = false;
+			}
+			
+			if (line.matches(".*<div\\s*class=\"col-xs-5\">Betriebsstunden:</div>.*$")) {
+				inOH = true;
 			}
 			
 			//year
-			if (line.matches(regexYear)) {
-				String year = line.replaceAll(regexYear, "$1");
-				
-				if (!year.isEmpty()) {
-					currentListing.setYear(year);
-				}
-				
-				//if 99, 12, 1 or similar idiotic year, try to resolve it
-				if (year.length() < 3) {
-					if (year.length() == 1) {
-						year = "0" + year;
-					}
-					
-					try {
-						DateFormat sdfp = new SimpleDateFormat("yy");
-						Date y = sdfp.parse(year);
-						DateFormat sdff = new SimpleDateFormat("yyyy");
-						String yearNew = sdff.format(y);
-						currentListing.setYear(yearNew);
-					} catch (Exception e) {
-						//ignore, original year will be used
+			if (inYear) {
+				String value = line.replaceAll(".*<div\\s*class=\"col-xs-7\">([0-9]{1,4})</div>.*$", "$1");
+				if (value != null && !value.isEmpty()) {
+					if (value.length() < 3) {
+						if (value.length() == 1) {
+							value = "0" + value;
+						}
+						
+						try {
+							DateFormat sdfp = new SimpleDateFormat("yy");
+							Date y = sdfp.parse(value);
+							DateFormat sdff = new SimpleDateFormat("yyyy");
+							String yearNew = sdff.format(y);
+							currentListing.setYear(yearNew);
+						} catch (Exception e) {
+							//ignore, original year will be used
+						}
+					} else {
+						currentListing.setYear(value);
 					}
 				}
+				inYear = false;
 			}
 			
-			//price
-			if (line.matches(regexPriceCurrencyVAT)) {
-				String price = line.replaceFirst(regexPriceCurrencyVAT, "$2");
-				String currency = line.replaceFirst(regexPriceCurrencyVAT, "$1");
+			if (line.matches(".*<div\\s*class=\"col-xs-5\">Baujahr:</div>.*$")) {
+				inYear = true;
+			}
+			
+			if (inPrice) {
 				String text = null;
 				if (line.matches(".*<i>[^<]+</i>.*")) {
 					text = line.replaceFirst(".*<i>([^<]+)</i>.*", "$1");
@@ -230,7 +220,7 @@ public class Landwirt extends Crawler {
 				
 				if (text != null && text.startsWith("inkl")) {
 					//if the VAT is included, need to recalculate
-					if (price != null) {
+					if (currentListing.getPrice() != null) {
 						String percentStr = text.replaceAll("^[^0-9]*([,0-9]+)\\s*%[^0-9]*$", "$1").replaceAll(",", ".");
 						float percent = -1;
 						if (percentStr != null && !percentStr.isEmpty()) {
@@ -247,19 +237,27 @@ public class Landwirt extends Crawler {
 						
 						if (percent > 0) {
 							try {
-								String nettoPrice = new Integer(Math.round(Float.parseFloat(price.replaceAll("[^0-9]", "")) / (100 + percent) * 100)).toString();
+								String nettoPrice = new Integer(Math.round(Float.parseFloat(currentListing.getPrice().replaceAll("[^0-9]", "")) / (100 + percent) * 100)).toString();
 								currentListing.setPrice(nettoPrice);
-								currentListing.setCurrency(currency);
 							} catch (Exception e) {
 								//ignore
 							}
 						}
 					}
-				} else {
-					if (price != null && !price.isEmpty()) {
-						currentListing.setPrice(price);
-						currentListing.setCurrency(currency);
-					}
+				}
+				
+				inPrice = false;
+			}
+			
+			//price
+			if (line.matches(regexPriceCurrency)) {
+				inPrice = true;
+				String price = line.replaceFirst(regexPriceCurrency, "$2");
+				String currency = line.replaceFirst(regexPriceCurrency, "$1");
+				
+				if (price != null && !price.isEmpty()) {
+					currentListing.setPrice(price);
+					currentListing.setCurrency(currency);
 				}
 			}
 			
