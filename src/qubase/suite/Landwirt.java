@@ -132,7 +132,7 @@ public class Landwirt extends Crawler {
 		
 		String regexTitle = ".*<h1\\s*class=\"detailMainHeader\">(.*?)<div\\s*class=\"h5\".*$";
 		String regexPriceCurrency = ".*<strong>Preis:\\s*([A-Z]{1,4})\\s*([\\.0-9]+),--</strong>.*$";
-		String regexInAddress = ".*\\s*<address>\\s*.*";
+		String regexInAddress = ".*\\s*<div\\s*id=\"detailcontact\">\\s*.*";
 		String regexZipRegion = ".*<br\\s*/>\\s*([- A-Z0-9]+)\\s+-\\s+(.*?)<.*$";
 		String regexInTel = ".*<span\\s*class=\"telefonnummerdetail\\s*telefonicon\">.*";
 		String regexInCell = ".*<span\\s*class=\"telefonnummerdetail\\s*handyicon\">.*";
@@ -330,6 +330,7 @@ public class Landwirt extends Crawler {
 				statusDone = true;
 			}
 		}
+		System.out.println("opic");
 	}
 
 	@Override
