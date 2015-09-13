@@ -330,7 +330,6 @@ public class Landwirt extends Crawler {
 				statusDone = true;
 			}
 		}
-		System.out.println("opic");
 	}
 
 	@Override
