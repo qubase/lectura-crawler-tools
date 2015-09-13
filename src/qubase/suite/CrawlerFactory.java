@@ -18,8 +18,6 @@ public class CrawlerFactory {
 			return new Autotrader();
 		} else if (portalName.equals("resaleweekly")) {
 			return new Resaleweekly();
-		} else if (portalName.equals("earthmovers")) {
-			return new Earthmovers();
 		} else {
 			throw new IllegalArgumentException("Invalid portal name: " + portalName);
 		}
