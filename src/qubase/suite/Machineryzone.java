@@ -1,27 +1,35 @@
 package qubase.suite;
 
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.Locale;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 public class Machineryzone extends Crawler {
 	
-	//save already loaded links when traversing sitemap to not to visit the same more times
-	//e.g. backhoe loaders are present on more than one spot
-	private HashSet<URL> personalBlacklist = new HashSet<URL>();
-	
-	private String currentCategory = null;
+	private HashMap<String, String> priceMap = new HashMap<String, String>();
 	
 	public Machineryzone() {
 		super();
 		name = "machineryzone";
 		
 		try {
-			siteMapUrl = new URL("http://www.machineryzone.eu/");
+			siteMapUrl = new URL("http://www.machineryzone.eu");
 		} catch (MalformedURLException e) {
 			logger.severe("Failed to init siteMapUrl: [http://www.machineryzone.eu/] " + e.getMessage());
 		}
@@ -31,82 +39,129 @@ public class Machineryzone extends Crawler {
 	@Override
 	protected void parseSiteMap(String input) {
 		String[] lines = input.split("\\r?\\n");
-		String regexLvl1Link = "^.*<h3\\s*style=\"margin-top:-3px;\"><a\\s*href=\"([^\"]+)\">.*?</a><span class=\"pac_NbAnnTot\">.*$";
+		ArrayList<SiteMapLocation> cats = new ArrayList<SiteMapLocation>();
+		
+		String regexPreHref = "<li\\s*class=\"li3\">";
+		String regexHref = "<a\\s*href=\"(/used/.*?)\">";
+		String regexPostHref = "(.+?)<span>\\([0-9,\\.]+\\)</span>";
+		
+		String regexPreHref2 = "<div\\s*class=\"title-ul3\">";
+		String regexPostHref2 = "([^<>]+)";
+		
+		boolean inHref = false;
+		boolean inHref2 = false;
+		
+		String leafUrlStr = null;
+		String urlStr = null;
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
-			if (line.matches(regexLvl1Link)) {
+			
+			if (inHref && line.matches(regexPostHref)) {
+				inHref = false;
 				try {
-					URL level1url = new URL(siteMapUrl + line.replaceFirst(regexLvl1Link, "$1").replaceFirst("/", ""));
-					if (blacklist.contains(level1url)) {
+					URL leafUrl = new URL(siteMapUrl + leafUrlStr);
+					if (blacklist.contains(leafUrl)) {
 						continue;
 					}
-					traverse(level1url, null);
-					personalBlacklist.clear();//this was needed only for traversing, clear it for the next traversing
+					blacklist.add(leafUrl);
+					String name = line.replaceFirst(regexPostHref, "$1");
+					SiteMapLocation sm = new SiteMapLocation(leafUrl, name);
+					cats.add(sm);
 				} catch (MalformedURLException e) {
 					logger.severe("Failed to parse site map: " + e.getMessage());
 				}
 			}
+			
+			if (inHref) {
+				String href = line.replaceFirst(regexHref, "$1");
+				if (href != null && !href.isEmpty()) {
+					leafUrlStr = line.replaceFirst(regexHref, "$1");
+				}
+			}
+			
+			if (line.matches(regexPreHref)) {
+				inHref = true;
+			}
+			
+			// non-leaf nodes
+			if (inHref2 && line.matches(regexPostHref2)) {
+				inHref2 = false;
+				try {
+					URL url = new URL(siteMapUrl + urlStr);
+					if (blacklist.contains(url)) {
+						continue;
+					}
+					blacklist.add(url);
+					String name = line.replaceFirst(regexPostHref2, "$1");
+					SiteMapLocation sm = new SiteMapLocation(url, name);
+					cats.add(sm);
+				} catch (MalformedURLException e) {
+					logger.severe("Failed to parse site map: " + e.getMessage());
+				}
+			}
+			
+			if (inHref2) {
+				String href = line.replaceFirst(regexHref, "$1");
+				if (href != null && !href.isEmpty()) {
+					urlStr = line.replaceFirst(regexHref, "$1");
+				}
+			}
+			
+			if (line.matches(regexPreHref2)) {
+				inHref2 = true;
+			}
+		}
+		
+		for (SiteMapLocation sm : cats) {
+			confirmAndSaveSitemapLink(sm);
 		}
 	}
 	
-	private void traverse(URL url, String name) throws MalformedURLException  {
-		String html = loadCustomPage(url);
+	private void confirmAndSaveSitemapLink(SiteMapLocation sm) {
+		String html = loadCustomPage(sm.url);
 		
-		//check if this is a list, if not, go deeper
-		//if so, save the URL unless it's on blacklist
-		if (html.indexOf("<h2 class=\"nbResultats\">") > 0) {
-			addToSiteMap(new SiteMapLocation(url, name));
+		//check if this is a list
+		if (html.indexOf("<div class=\"liste-simple\">") > 0) {
+			addToSiteMap(sm);
 			return;
-		}
-		
-		String[] lines = html.split("\\r?\\n");
-		for (String lineIn : lines) {
-			String line = lineIn.trim();
-			if (line.matches("^</script><td><table\\s*id=\"arianeHaut\".*$")) {
-				Pattern pattern = Pattern.compile("<a href=/(used/1/[^\\.]+\\.html) class=\"lienSsRub\">([^<]+?)</a>");
-				Matcher matcher = pattern.matcher(line);
-		        
-		        while (matcher.find()) {
-		        	URL nextUrl = new URL(siteMapUrl + matcher.group(1));
-		        	if (blacklist.contains(nextUrl) || personalBlacklist.contains(nextUrl)) {
-		        		continue;
-		        	} else {
-		        		personalBlacklist.add(nextUrl);
-		        		traverse(nextUrl, matcher.group(2));
-		        	}
-		        }
-			}
 		}
 	}
 
 	@Override
 	protected void parseList(String input) {
 		String[] lines = input.split("\\r?\\n");
+		
+		String regexItemStart = "<div\\s*class=\"(liste-simple|liste-avant)\">";
+		String regexItemHref = "<a\\s*href=\"(/used/.*?)\">";
+		
+		boolean inItem = false;
+		String lastLink = null;
+		
 		for (String lineIn : lines) {
 			String line = lineIn.trim();
 			
-			//parse the category name here, use it in parseListing later
-			String regexCategory = "^.*?<td\\s*id=\"arianeHautLiensNav\"><a\\s*href=\"/\">Home</a>.*?:\\s*<a\\s*href=[^>]+>([^>]+)</a></td>.*$";
-			if (line.matches(regexCategory)) {
-				currentCategory = line.replaceAll(regexCategory, "$1");
+			if (line.matches(regexItemHref) && inItem) {
+				inItem = false;
+				String link = siteMapUrl + line.replaceFirst(regexItemHref, "$1");
+				try {
+					URL url = new URL(link);
+					status.list.add(url);
+					lastLink = link;
+				} catch (MalformedURLException e) {
+					logger.severe("Failed to parse URL: " + siteMapUrl + line.replaceFirst(regexItemHref, "$1"));
+				}
 			}
 			
-			if (line.matches("<div><span class=\"right rech-tri\">.*$")) {
-				
-				if (line.indexOf("next page") > 0) {
-					status.nextPageAvailable = true;
-				}
-				
-				Pattern pattern = Pattern.compile("<a href=\"/(used/[^\\.]+?\\.html|new/[^\\.]+?\\.html)\".*?data-id=\"[0-9]*\".*?>");
-		        Matcher  matcher = pattern.matcher(line);
-		        
-		        while (matcher.find()) {
-		        	try {
-		        		status.list.add(new URL(siteMapUrl + matcher.group(1)));
-					} catch (MalformedURLException e) {
-						logger.severe("Failed to parse URL: " + siteMapUrl + matcher.group(1));
-					}
-		        }
+			if (line.matches(regexItemStart)) {
+				inItem = true;
+			}
+			
+			if (line.indexOf("<span class=\"glyphicons arrowright\"></span>") > 0) {
+				status.nextPageAvailable = true;
+			}
+			
+			if (line.startsWith("<span class=\"js-price\" data-value=") && lastLink != null) {
+				priceMap.put(lastLink, line.replaceFirst(".+?>(.+?)<.*", "$1"));
 			}
 		}
 	}
@@ -119,178 +174,164 @@ public class Machineryzone extends Crawler {
 		try {
 			url = status.list.get(status.pagePosition).toString();
 			currentListing.setUrl(url);
+			currentListing.setCategory(status.siteMap.get(status.siteMapIndex).name);
+			currentListing.setCatLang("EN");
+			String price = priceMap.get(url);
+			if (price != null) {
+				currentListing.setPrice(price.replaceAll("[^0-9]", ""));
+				currentListing.setCurrency("EUR");
+			}
 		} catch (Exception e) {
 			//ignore, this is a test call
 		}
 		
-		//the value for the category is loaded in the parseList, because its always the same for the whole list
-		currentListing.setCategory(currentCategory);
-		currentListing.setCatLang("EN");
-		
 		String[] lines = input.split("\\r?\\n");
 		
-		String regexMake = "^.*?<b>Make</b>.*?class=\"droite\\s*[a-zA-Z]*\"><a\\s*href=\"[^\"]+\">(.*?)</a>.*$"; //parse brand
-		String regexModel = "^.*?<b>Model</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse model name
-		String regexYear = "^.*?<b>Year</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9]+)</td>.*$"; //parse year of manufacture
-		String regexHours = "^.*?<b>Hours</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) h</td>.*$"; //parse op. hours
-		String regexMileage = "^.*?<b>Mileage</b>.*?class=\"droite\\s*[a-zA-Z]*\">([0-9\\.,]+) (mi|km)</td>.*$"; //parse mileage
-		String regexSerial = "^.*?<b>Serial&nbsp;number</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse serial nr.
-		String regexPrice = "^.*?<b>Price\\s*excl\\.\\s*VAT</b>&nbsp;:\\s*</td><td\\s*class=\"droite\\s*[a-zA-Z]*\">([0-9\\., &nbsp;]+).*$"; //parse price
-		String regexCurrency = "^.*?<option\\s*value=[A-Z]{3}\\s*selected\\s*>([A-Z]{3})</option>.*$"; //parse currency
-		String regexLocation = "^.*?<b>Location</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse country
-		String regexDate = "^.*?<div\\s*class=\"enteteCadre\">.*\\s([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})</div>.*$"; //parse date
-		String regexAddress = "^.*?<b>Address</b>.*?class=\"droite\\s*[a-zA-Z]*\">(.*?)</td>.*$"; //parse address
-		String regexCompany = "^.*?<td\\s*class=\"droite\\s*vendeur\"\\s*style=\"[^\"]+\"><b>(<a\\s*href=[^>]+>)?(.*?)(</a>)?</b></td>.*$";//parse company
+		boolean inCompany = false;
 		
-		for (String lineIn : lines) {
-			String line = lineIn.trim();
+		boolean inDetail = false;
+		String detail = "";
+		for (int i = 0; i < lines.length; i++) {
 			
-			if (line.matches(regexMake)) {
-				String val = line.replaceAll(regexMake, "$1");
-				if (!isNotAvailableValue(val)) {
-					currentListing.setManName(val);
-				}
+			String line = lines[i].trim();
+			
+			if (line.matches("\\s*</table>\\s*")) {
+				detail += line;
+				inDetail = false;
 			}
 			
-			if (line.matches(regexModel)) {
-				String val = line.replaceAll(regexModel, "$1");
-				if (!isNotAvailableValue(val)) {
-					currentListing.setModelName(val);
-				}
+			if (inDetail) {
+				detail += line.replaceAll("&", "&amp;") + "\r\n";
 			}
 			
-			//this will never be N/A due to the regex
-			if (line.matches(regexYear)) {
-				currentListing.setYear(line.replaceAll(regexYear, "$1"));
+			if (line.matches("\\s*<div\\s*class=\"bloc-annonce\">\\s*")) {
+				inDetail = true;
 			}
 			
-			//this will never be N/A due to the regex
-			if (line.matches(regexHours)) {
-				currentListing.setCounter(line.replaceAll(regexHours, "$1"));
+			if (inCompany && line.matches("[^<]+")) {
+				currentListing.setCompany(line);
+				inCompany = false;
 			}
 			
-			if (line.matches(regexSerial)) {
-				String val = line.replaceAll(regexSerial, "$1");
-				if (!isNotAvailableValue(val)) {
-					currentListing.setSerial(val);
-				}
+			if (line.equals("<h3 itemprop=\"name\" class=\"p14 bold linkunderline margin10b\">")) {
+				inCompany = true;
 			}
 			
-			if (line.matches(regexCompany)) {
-				String val = line.replaceAll(regexCompany, "$2");
-				if (!isNotAvailableValue(val)) {
-					currentListing.setCompany(val);
-				}
-			}
-			
-			//this will never be N/A due to the regex
-			if (line.matches(regexPrice)) {
-				currentListing.setPrice(line.replaceAll(regexPrice, "$1").replaceAll("&nbsp;", ""));
-			}
-			
-			//this will never be N/A due to the regex
-			if (line.matches(regexCurrency)) {
-				currentListing.setCurrency(line.replaceAll(regexCurrency, "$1"));
-			}
-			
-			if (line.matches(regexLocation)) {
-				String val = line.replaceAll(regexLocation, "$1");
-				if (!isNotAvailableValue(val)) {
-					if (val.matches("[^\\(]+\\s\\(.*?\\)")) {
-						val = val.replaceFirst("([^\\(]+)\\s\\(.*?\\)", "$1");
-					}
-					currentListing.setCountry(val);
-				}
-			}
-			
-			//this will never be N/A due to the regex
-			if (line.matches(regexMileage)) {
-				String counter = line.replaceAll(regexMileage, "$1");
-				String unit = line.replaceAll(regexMileage, "$2");
+			if (line.startsWith("<p itemprop=\"address\"")) {
 				
-				if (unit.equals("mi")) {
-					//convert miles to km
-					counter = new Integer(Math.round((int) (Integer.parseInt(counter) * 1.60934))).toString();
+				String address = line;
+				if (!line.endsWith("</p>")) {
+					address += " " + lines[i + 1];
+					i++;
 				}
 				
-				currentListing.setCounter(counter);
-			}
-			
-			if (line.matches(regexDate)) {
-				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-				Date date = null;
-				String dateIn = line.replaceAll(regexDate, "$1");
-				try {
-					date = sdf.parse(dateIn);
-				} catch (Exception e) {
-					//couldn't parse the date use now()
-					logger.warning("Couldn't parse the date: " + dateIn + " | " + currentListing.getUrl() + " | " + e.getMessage());
-					date = new Date();
-				}
+				String zip = address.replaceFirst(".*<span\\s*itemprop=\"postalCode\">([^<]+)</span>.*", "$1");
+				String region = address.replaceFirst(".*<span\\s*itemprop=\"addressLocality\">([^<]+)</span>.*", "$1");
+				String country = address.replaceFirst(".*?-\\s*([^<]+)</p>", "$1");
 				
-				sdf.applyPattern("yyyy-MM-dd");
-				String dateOut = sdf.format(date);
-				
-				currentListing.setDate(dateOut);
-			}
-			
-			if (line.matches(regexAddress)) {
-				String[] address = line.replaceAll(regexAddress, "$1").split("<br>",-1);
-				String regionZipCountry = null;
-				if (address.length == 2) {
-					regionZipCountry = address[1];
-				} else if (address.length == 1) {
-					regionZipCountry = address[0];
-				} else if (address.length > 2) {
-					regionZipCountry = address[1];
-					logger.warning("Address has more than 2 lines: " + url);
-				}
-				
-				if (regionZipCountry != null && !regionZipCountry.isEmpty()) {
-					/*
-					 * try to parse the address to zip and region
-					 * specification is following:
-					 *	1. zip can contain big letters, numbers and dash
-					 *	2. zip consists of 1 to 3 parts separated by a blank character
-					 *	3. zip and region can be in arbitrary order, e.g. Dungannon BT71 6NL or even BT71 6NL Dungannon
-					 *	4. zip and region are followed by the country and are separated from it by a "blank dash blank" char. sequence
-					 *	5. the part after the dash and dash itself can be ignored, country is parsed from a different source
-					 *	6. zip must be max 9 chars long excluding blank chars
-					 *	7. zip must either be followed by the end of the string or by a blank character
-					 *
-					 * Some of the addresses are formatted differently (there are user defined new lines, these are ignored)
-					 */
-					
-					String regionZip = regionZipCountry.replaceAll("^(.*?)\\s-\\s.*$", "$1");
-					String zip = regionZip.replaceAll("^.*?([-A-Z0-9]{2,3})(\\s)?([-A-Z0-9]{2,3})?(\\s?)([A-Z0-9]{2,3})($|\\s.*$)", "$1$2$3$4$5");
-					String region = null;
-					
-					//no zip recognized, apparently it is not there
-					if (zip.equals(regionZip) || regionZip.startsWith(". ")) {
-						zip = null;
-						region = (regionZip.startsWith(". ")) ? regionZip.replaceFirst("\\. ", "").trim() : regionZip;
-					} else {
-						region = regionZip.replaceAll(zip, "").trim();
-					}
-					
-					//if the region still contains some numbers, it's wrong, rather leave it empty
-					//it was parsed in a wrong way most probably, region wouldn't normally contain numbers
-					if (region.matches("([0-9]+\\s.*|.*\\s[0-9]+|.*[0-9]+.*)")) {
-						zip = null;
-						region = null;
-					}
-					
-					if (zip != null && !zip.isEmpty()) {
-						currentListing.setZip(zip);
-					}
-					
-					if (region != null && !region.isEmpty()) {
-						currentListing.setRegion(region);
-					}					
-				}
+				currentListing.setZip(zip);
+				currentListing.setRegion(region);
+				currentListing.setCountry(country);
 			}
 		}
-	}
+		
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();  
+	    DocumentBuilder builder;
+	    try {  
+	        builder = factory.newDocumentBuilder();  
+	        Document document = builder.parse(new InputSource(new StringReader(detail.replaceAll("<br>", "<br />"))));
+	        
+	        XPath xPath =  XPathFactory.newInstance().newXPath();
+
+	        NodeList links = (NodeList) xPath.compile("//*/text()").evaluate(document, XPathConstants.NODESET);
+	        
+	        int size = links.getLength();
+	        
+	        boolean inMake = false;
+	        boolean inModel = false;
+	        boolean inYear = false;
+	        boolean inHrs = false;
+	        boolean inDate = false;
+	        boolean inMileage = false;
+	        boolean inSerial = false;
+	        
+			for (int i = 0; i < size; i++) {
+				String item = links.item(i).getTextContent().trim();
+				
+				if (item.isEmpty()) {
+					continue;
+				}
+				
+				if (inMake) {
+					inMake = false;
+					currentListing.setManName(notAvailableValue(item));
+				}
+				
+				if (inModel) {
+					inModel = false;
+					currentListing.setModelName(notAvailableValue(item));
+				}
+				
+				if (inYear) {
+					inYear = false;
+					currentListing.setYear(notAvailableValue(item));
+				}
+				
+				if (inSerial) {
+					inSerial = false;
+					currentListing.setSerial(notAvailableValue(item));
+				}
+				
+				if (inHrs || inMileage) {
+					inHrs = false;
+					inMileage = false;
+					String val = notAvailableValue(item);
+					if (val != null) {
+						currentListing.setCounter(val.replaceAll("[^0-9]", ""));
+					}
+				}
+				
+				if (inDate) {
+					inDate = false;
+					int style = DateFormat.MEDIUM;
+					SimpleDateFormat sdf = (SimpleDateFormat) DateFormat.getDateInstance(style, Locale.US);
+					sdf.applyPattern("MMM dd, yyyy");
+					Date date = null;
+					String dateIn = item;
+					try {
+						date = sdf.parse(dateIn);
+					} catch (Exception e) {
+						//couldn't parse the date use now()
+						logger.warning("Couldn't parse the date: " + dateIn + " | " + currentListing.getUrl() + " | " + e.getMessage());
+						date = new Date();
+					}
+					
+					sdf.applyPattern("yyyy-MM-dd");
+					String dateOut = sdf.format(date);
+					
+					currentListing.setDate(dateOut);
+				}
+				
+				if (item.equals("Make :")) {
+					inMake = true;
+				} else if (item.equals("Model :")) {
+					inModel = true;
+				} else if (item.equals("Year :")) {
+					inYear = true;
+				} else if (item.equals("Hours :")) {
+					inHrs = true;
+				} else if (item.equals("Registration date :")) {
+					inDate = true;
+				} else if (item.equals("Mileage :")) {
+					inMileage = true;
+				} else if (item.startsWith("Serial")) {
+					inSerial = true;
+				}
+			}
+	    } catch (Exception e) {  
+	        logger.severe(e.getMessage());  
+	    }
+    }
 
 	@Override
 	protected URL modifyUrl(URL originalUrl) {
@@ -303,8 +344,7 @@ public class Machineryzone extends Crawler {
 		}
 	}
 	
-	private boolean isNotAvailableValue(String val) {
-		return val.trim().equals("N/A");
+	private String notAvailableValue(String val) {
+		return val.trim().equals("N/A") ? null : val;
 	}
-
 }
