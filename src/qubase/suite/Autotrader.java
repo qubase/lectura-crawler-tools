@@ -31,7 +31,7 @@ public class Autotrader extends Crawler {
 	@Override
 	protected void parseList(String input) {
 		String[] lines = input.split("\\r?\\n");
-		String regexLink = ".*?<a href=\"(.*?)\"\\s*title=\".*?\"\\s*class=\"main\">.*$";
+		String regexLink = ".*?<a href=\"(.*?)\"\\s*title=\".*?\"\\s*class=\"tracking-standard-link\"\\s*data-label=\"listing-advert-title\">.*$";
 		for (int i = 0; i < lines.length; i++) {
 			if (lines[i].matches(regexLink)) {
 				String link = lines[i].replaceAll(regexLink, "$1");
@@ -45,7 +45,7 @@ public class Autotrader extends Crawler {
 				}
 			}
 			
-			if (lines[i].matches(".*?<a\\s*href=\"[^\"]+\"\\s*class=\"last\">Last\\s*&raquo;</a>.*$")) {
+			if (lines[i].matches(".*?<span\\s*class=\"pagination__text\"\\s*data-label=\"bottom-next-page\">Next</span></a>.*$")) {
 				status.nextPageAvailable = true;
 			}
 		}
@@ -69,10 +69,9 @@ public class Autotrader extends Crawler {
 		String regexInBreadCrumbs = "<a\\s*href=\".*?\">Used\\s(Farm|Plant)\\sMachinery</a>\\s*/";
 		String regexInAdvert = "<div\\s*class=\"advertInfo\">";
 		String regexManufacturer = "<a href=\".*?\">(.*?)</a>\\s*/\\s*";
-		String regexPrice = "<div>&pound;([,\\.0-9]+)(\\s\\+VAT)?</div>";
-		String regexPriceEur = "<div\\s*class=\"priceEur\">&euro;([,\\.0-9]+)</div>";
-		String regexInPrice = "<div\\s*class=\"price\">";
-		String regexInCompany = ".*?<span\\s*class=\"seller\">Trade Seller:</span>.*$";
+		String regexPrice = ".*&pound;([,\\.0-9]+)(\\s\\+VAT)?.*";
+		String regexPriceEur = ".*&euro;([,\\.0-9]+).*";
+		String regexCompany = ".*?<h2\\s*class=\"dealerProfileHeading\">([^<]+)</h2>.*$";
 		
 		String manufacturer = null;
 		String category = null;
@@ -80,8 +79,8 @@ public class Autotrader extends Crawler {
 		boolean inBreadCrumbs = false;
 		boolean inInfo = false;
 		boolean nextLiIsFirst = false;
-		boolean inPrice = false;
-		boolean inCompany = false;
+		
+		boolean hasEur = false;
 		
 		for (int i = 0; i < lines.length; i++) {
 			
@@ -106,51 +105,30 @@ public class Autotrader extends Crawler {
 			}
 			
 			//company
-			if (inCompany) {
-				String company = line.trim();
+			if (line.matches(regexCompany)) {
+				String company = line.replaceFirst(regexCompany, "$1");
 				if (company != null && !company.isEmpty()) {
 					currentListing.setCompany(company);
 				}
-				inCompany = false;
 				continue;
 			}
 			
-			if (line.matches(regexInCompany)) {
-				inCompany = true;
-				continue;
-			}
 			
-			//price
-			if (inPrice) {
-				if (line.matches(regexPrice)) {
-					String price = line.replaceAll(regexPrice, "$1");
-					if (price != null && !price.isEmpty()) {
-						currentListing.setPrice(price);
-						currentListing.setCurrency("GBP");
-					}
-					inPrice = false;
-				}
-				
-				if (lines[i+1].trim().matches(regexPriceEur)) {
-					line = lines[i+1].trim();
-					String price = line.replaceAll(regexPriceEur, "$1");
-					if (price != null && !price.isEmpty()) {
-						currentListing.setPrice(price);
-						currentListing.setCurrency("EUR");
-					}
-					inPrice = false;
-					i++;
+			if (line.matches(regexPrice) && !hasEur) {
+				String price = line.replaceAll(regexPrice, "$1");
+				if (price != null && !price.isEmpty()) {
+					currentListing.setPrice(price);
+					currentListing.setCurrency("GBP");
 				}
 			}
 			
-			if (inPrice && line.matches("^\\s*</div>\\s*$")) {
-				inPrice = false;
-				continue;
-			}
-			
-			if (line.matches(regexInPrice)) {
-				inPrice = true;
-				continue;
+			if (line.matches(regexPriceEur) && !hasEur) {
+				String price = line.replaceAll(regexPriceEur, "$1");
+				if (price != null && !price.isEmpty()) {
+					currentListing.setPrice(price);
+					currentListing.setCurrency("EUR");
+					hasEur = true;
+				}
 			}
 			
 			//category + year + hrs
@@ -164,8 +142,8 @@ public class Autotrader extends Crawler {
 				continue;
 			}
 			
-			if (line.matches("<li>.*</li>") && inInfo) {
-				String val = line.replaceAll("<li>(.*)</li>", "$1");
+			if (line.matches("[^<>]+") && inInfo) {
+				String val = line;
 				boolean valAccepted = false;
 				if (val.matches("[0-9]{4}")) {
 					currentListing.setYear(val);
